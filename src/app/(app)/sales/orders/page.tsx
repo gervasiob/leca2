@@ -53,7 +53,7 @@ const getClientName = (clientId: number) => {
 }
 
 const getOrderDate = (orderId: number) => {
-    return orders.find(o => o.id === orderId)?.orderDate || new Date();
+    return orders.find(o => o.id === orderId)?.orderDate || new Date(0);
 }
 
 const statusVariantMap: { [key in OrderDetailStatus]: "default" | "secondary" | "destructive" | "outline" } = {

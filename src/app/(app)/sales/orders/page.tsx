@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import Link from 'next/link';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import {
@@ -143,7 +144,9 @@ export default function SalesOrdersPage() {
         title="Sales & Orders"
         description="Manage all order details from creation to delivery."
       >
-        <Button>Create New Order</Button>
+        <Button asChild>
+          <Link href="/sales/orders/create">Create New Order</Link>
+        </Button>
       </PageHeader>
       <Card>
         <CardHeader>

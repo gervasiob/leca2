@@ -104,7 +104,7 @@ export default function DispatchPage() {
                     <TableCell className="text-right">
                         <Button size="sm" asChild>
                             <Link href={`/dispatch/${order.id}/generate/complete`}>
-                                <FileText className="mr-2" />
+                                <FileText className="mr-2 h-4 w-4" />
                                 Generar Remito
                             </Link>
                         </Button>
@@ -155,7 +155,7 @@ export default function DispatchPage() {
                     <TableCell className="text-right">
                        <Button size="sm" asChild>
                          <Link href={`/dispatch/${order.id}/generate/partial`}>
-                            <FileText className="mr-2" />
+                            <FileText className="mr-2 h-4 w-4" />
                             Generar Remito Parcial
                         </Link>
                       </Button>

@@ -230,7 +230,7 @@ export default function SalesOrdersPage() {
                     <Badge variant={statusVariantMap[detail.status] || 'default'}>{statusTranslations[detail.status]}</Badge>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">{format(getOrderDate(detail.orderId), 'dd/MM/yyyy')}</TableCell>
-                  <TableCell className="text-right">${detail.totalPrice.toLocaleString()}</TableCell>
+                  <TableCell className="text-right">${detail.totalPrice.toLocaleString('es-AR')}</TableCell>
                   <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

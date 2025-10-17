@@ -60,12 +60,21 @@ export default function PriceListsPage() {
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [previewData, setPreviewData] = useState<PriceUpdatePreview[]>([]);
+  const [prices, setPrices] = useState<Record<number, number>>({});
+
+  React.useEffect(() => {
+    const initialPrices: Record<number, number> = {};
+    products.forEach(product => {
+      initialPrices[product.id] = getProductPrice(product.id);
+    });
+    setPrices(initialPrices);
+  }, []);
 
   const handleDownloadTemplate = () => {
     const templateData = products.map(p => ({
         'ID Producto': p.id,
         'Nombre del Producto': p.name,
-        'Precio Unitario': getProductPrice(p.id)
+        'Precio Unitario': prices[p.id] || 0
     }));
 
     const csv = Papa.unparse(templateData);
@@ -112,7 +121,7 @@ export default function PriceListsPage() {
                         updates.push({
                             'ID Producto': productId,
                             'Nombre del Producto': product.name,
-                            'Precio Anterior': getProductPrice(product.id),
+                            'Precio Anterior': prices[product.id] || 0,
                             'Precio Nuevo': newPrice
                         });
                     }
@@ -134,9 +143,14 @@ export default function PriceListsPage() {
   const handleApplyUpdate = () => {
     // Here you would implement the actual price update logic
     console.log("Applying updates:", previewData);
+    const newPrices = { ...prices };
+    previewData.forEach(item => {
+        newPrices[parseInt(item['ID Producto'])] = item['Precio Nuevo'];
+    });
+    setPrices(newPrices);
     toast({
         title: "Actualización exitosa",
-        description: `${previewData.length} precios han sido actualizados (simulación).`
+        description: `${previewData.length} precios han sido actualizados.`
     });
     setDialogOpen(false);
     setFile(null);
@@ -215,8 +229,8 @@ export default function PriceListsPage() {
                                 {previewData.map(item => (
                                     <TableRow key={item['ID Producto']}>
                                         <TableCell>{item['Nombre del Producto']}</TableCell>
-                                        <TableCell className='text-right'>${item['Precio Anterior'].toLocaleString()}</TableCell>
-                                        <TableCell className='text-right text-primary font-medium'>${item['Precio Nuevo'].toLocaleString()}</TableCell>
+                                        <TableCell className='text-right'>${item['Precio Anterior'].toLocaleString('es-AR')}</TableCell>
+                                        <TableCell className='text-right text-primary font-medium'>${item['Precio Nuevo'].toLocaleString('es-AR')}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
@@ -269,7 +283,7 @@ export default function PriceListsPage() {
                   </TableCell>
                   <TableCell>{product.application}</TableCell>
                   <TableCell className="text-right">
-                    ${getProductPrice(product.id).toLocaleString()}
+                    ${(prices[product.id] || 0).toLocaleString('es-AR')}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>

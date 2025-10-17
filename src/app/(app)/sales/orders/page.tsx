@@ -20,7 +20,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { orderDetails, orders, clients } from '@/lib/data';
+import { orderDetails, orders, clients, users } from '@/lib/data';
 import type { OrderDetail, OrderDetailStatus } from '@/lib/types';
 import { MoreHorizontal, ArrowUpDown, Download } from 'lucide-react';
 import {
@@ -66,6 +66,8 @@ const statusVariantMap: { [key in OrderDetailStatus]: "default" | "secondary" | 
     cancelled: "destructive",
 }
 
+const loggedInUser = users.find(u => u.id === 2); // Simulating sales user logged in
+
 export default function SalesOrdersPage() {
   const [filter, setFilter] = useState('');
   const [sortConfig, setSortConfig] = useState<{
@@ -79,7 +81,16 @@ export default function SalesOrdersPage() {
   }, []);
   
   const filteredAndSortedDetails = useMemo(() => {
-    let filtered = orderDetails.filter((item) => {
+    const isSalesRole = loggedInUser?.role === 'Sales';
+    const salesUserOrderIds = isSalesRole 
+      ? new Set(orders.filter(o => o.userId === loggedInUser.id).map(o => o.id))
+      : new Set();
+
+    let baseDetails = isSalesRole 
+      ? orderDetails.filter(od => salesUserOrderIds.has(od.orderId))
+      : orderDetails;
+
+    let filtered = baseDetails.filter((item) => {
       const clientName = getClientName(item.clientId).toLowerCase();
       const productName = item.productName.toLowerCase();
       const orderId = item.orderId.toString();
@@ -275,3 +286,5 @@ export default function SalesOrdersPage() {
     </>
   );
 }
+
+    

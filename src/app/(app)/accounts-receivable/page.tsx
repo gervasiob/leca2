@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { clients, orderDetails } from '@/lib/data';
+import { clients, orderDetails, orders, users } from '@/lib/data';
 import { MoreHorizontal, Download } from 'lucide-react';
 import {
   DropdownMenu,
@@ -28,22 +28,41 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import Papa from 'papaparse';
+import { useMemo } from 'react';
 
-// Dummy function to calculate balance
-const getClientBalance = (clientId: number) => {
-  return orderDetails
-    .filter(
-      (od) =>
-        od.clientId === clientId &&
-        od.status !== 'delivered' &&
-        od.status !== 'resolved'
-    )
-    .reduce((acc, od) => acc + od.totalPrice, 0);
-};
+const loggedInUser = users.find(u => u.id === 2); // Simulating sales user logged in
 
 export default function AccountsReceivablePage() {
+
+  const filteredData = useMemo(() => {
+    const isSalesRole = loggedInUser?.role === 'Sales';
+    if (!isSalesRole) {
+      return { visibleClients: clients, visibleOrderDetails: orderDetails };
+    }
+
+    const salesUserOrderIds = new Set(orders.filter(o => o.userId === loggedInUser.id).map(o => o.id));
+    const visibleOrderDetails = orderDetails.filter(od => salesUserOrderIds.has(od.orderId));
+    const visibleClientIds = new Set(visibleOrderDetails.map(od => od.clientId));
+    const visibleClients = clients.filter(c => visibleClientIds.has(c.id));
+    
+    return { visibleClients, visibleOrderDetails };
+  }, []);
+
+  const { visibleClients, visibleOrderDetails } = filteredData;
+
+  const getClientBalance = (clientId: number) => {
+    return visibleOrderDetails
+      .filter(
+        (od) =>
+          od.clientId === clientId &&
+          od.status !== 'delivered' &&
+          od.status !== 'resolved'
+      )
+      .reduce((acc, od) => acc + od.totalPrice, 0);
+  };
+
   const handleDownloadCSV = () => {
-    const dataToExport = clients.map((client) => ({
+    const dataToExport = visibleClients.map((client) => ({
       Cliente: client.name,
       CUIT: client.cuit,
       Teléfono: client.phone,
@@ -95,7 +114,7 @@ export default function AccountsReceivablePage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {clients.map((client) => (
+              {visibleClients.map((client) => (
                 <TableRow key={client.id}>
                   <TableCell className="font-medium">{client.name}</TableCell>
                   <TableCell>{client.cuit}</TableCell>
@@ -137,3 +156,5 @@ export default function AccountsReceivablePage() {
     </>
   );
 }
+
+    

@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/page-header';
-import { clients, orderDetails, orders, claims } from '@/lib/data';
+import { clients, orderDetails, orders, claims, users } from '@/lib/data';
 import { SalesChart } from './sales-chart';
 import { StatusChart } from './status-chart';
 import {
@@ -46,6 +46,8 @@ import { DateRange } from 'react-day-picker';
 import { cn } from '@/lib/utils';
 import type { OrderDetail } from '@/lib/types';
 
+const loggedInUser = users.find(u => u.id === 2); // Simulating sales user logged in
+
 export default function Dashboard() {
   const [date, setDate] = useState<DateRange | undefined>({
     from: startOfMonth(new Date()),
@@ -59,28 +61,36 @@ export default function Dashboard() {
   const [recentActivities, setRecentActivities] = useState<OrderDetail[]>([]);
   
   useEffect(() => {
-    const calculatedTotalRevenue = orders
-      .filter((order) => {
-        if (!date?.from || !date?.to) return true;
-        return isWithinInterval(order.orderDate, {
-          start: date.from,
-          end: date.to,
-        });
-      })
-      .reduce((sum, order) => sum + order.totalAmount, 0);
+    const isSalesRole = loggedInUser?.role === 'Sales';
+    const salesUserOrderIds = isSalesRole 
+      ? new Set(orders.filter(o => o.userId === loggedInUser.id).map(o => o.id))
+      : new Set();
 
-    const calculatedPendingToProduceAmount = orderDetails
+    const filteredOrders = orders.filter((order) => {
+        const inDateRange = (!date?.from || !date?.to) || isWithinInterval(order.orderDate, { start: date.from, end: date.to });
+        const isUserOrder = !isSalesRole || salesUserOrderIds.has(order.id);
+        return inDateRange && isUserOrder;
+    });
+
+    const filteredOrderDetails = orderDetails.filter(od => !isSalesRole || salesUserOrderIds.has(od.orderId));
+    
+    const calculatedTotalRevenue = filteredOrders.reduce((sum, order) => sum + order.totalAmount, 0);
+
+    const calculatedPendingToProduceAmount = filteredOrderDetails
       .filter((od) => od.status === 'pending')
       .reduce((acc, od) => acc + od.totalPrice, 0);
 
-    const calculatedPendingRevenue = orderDetails
+    const calculatedPendingRevenue = filteredOrderDetails
       .filter(
         (od) => od.status !== 'delivered' && od.status !== 'resolved'
       )
       .reduce((acc, od) => acc + od.totalPrice, 0);
 
-    const calculatedClientsWithPendingBalance = clients.filter((client) => {
-      const balance = orderDetails
+    const salesUserClientIds = isSalesRole ? new Set(filteredOrderDetails.map(od => od.clientId)) : new Set();
+    const filteredClients = isSalesRole ? clients.filter(c => salesUserClientIds.has(c.id)) : clients;
+
+    const calculatedClientsWithPendingBalance = filteredClients.filter((client) => {
+      const balance = filteredOrderDetails
         .filter(
           (od) =>
             od.clientId === client.id &&
@@ -95,7 +105,7 @@ export default function Dashboard() {
     setPendingToProduceAmount(calculatedPendingToProduceAmount);
     setPendingRevenue(calculatedPendingRevenue);
     setClientsWithPendingBalance(calculatedClientsWithPendingBalance);
-    setRecentActivities(orderDetails.slice(0, 5));
+    setRecentActivities(filteredOrderDetails.slice(0, 5));
   }, [date]);
 
 
@@ -152,7 +162,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${totalRevenue.toLocaleString()}
+              ${totalRevenue.toLocaleString('es-AR')}
             </div>
             <p className="text-xs text-muted-foreground">
               Ingresos del período seleccionado
@@ -168,7 +178,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${pendingRevenue.toLocaleString()}
+              ${pendingRevenue.toLocaleString('es-AR')}
             </div>
             <p className="text-xs text-muted-foreground">
               Monto total pendiente de cobro.
@@ -200,7 +210,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${pendingToProduceAmount.toLocaleString()}
+              ${pendingToProduceAmount.toLocaleString('es-AR')}
             </div>
             <p className="text-xs text-muted-foreground">
               Valor de ítems pendientes de producción.
@@ -284,3 +294,5 @@ export default function Dashboard() {
     </div>
   );
 }
+
+    

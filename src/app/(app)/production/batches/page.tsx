@@ -1,5 +1,5 @@
+
 import { PageHeader } from '@/components/page-header';
-import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -16,82 +16,139 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { productionBatches } from '@/lib/data';
-import { MoreHorizontal } from 'lucide-react';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuTrigger,
-  } from "@/components/ui/dropdown-menu"
-  import { format } from 'date-fns';
+import { orderDetails, clients } from '@/lib/data';
+import { format } from 'date-fns';
+import type { OrderDetail } from '@/lib/types';
 
-const statusVariantMap: { [key: string]: "default" | "secondary" | "destructive" | "outline" } = {
-    Planned: "outline",
-    "In Progress": "secondary",
-    Completed: "default",
-}
+const getClientName = (clientId: number) => {
+  return clients.find((c) => c.id === clientId)?.name || 'N/A';
+};
 
 export default function ProductionBatchesPage() {
+  const pendingOrders = orderDetails.filter(
+    (od) => od.status === 'pending'
+  );
+
+  const groupedPendingOrders: {
+    productName: string;
+    totalQuantity: number;
+    count: number;
+  }[] = pendingOrders.reduce((acc, order) => {
+    const existingProduct = acc.find(
+      (p) => p.productName === order.productName
+    );
+    if (existingProduct) {
+      existingProduct.totalQuantity += order.quantity;
+      existingProduct.count += 1;
+    } else {
+      acc.push({
+        productName: order.productName,
+        totalQuantity: order.quantity,
+        count: 1,
+      });
+    }
+    return acc;
+  }, [] as { productName: string; totalQuantity: number; count: number }[]);
+
   return (
     <>
       <PageHeader
-        title="Production Batches"
-        description="Manage and track production batches."
-      >
-        <Button>Create New Batch</Button>
-      </PageHeader>
-      <Card>
-        <CardHeader>
-          <CardTitle>Batches</CardTitle>
-          <CardDescription>A list of all production batches.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Batch Number</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-center">Items</TableHead>
-                <TableHead className="hidden md:table-cell">Planned Date</TableHead>
-                <TableHead className="hidden md:table-cell">Production Date</TableHead>
-                <TableHead>
-                    <span className="sr-only">Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {productionBatches.map((batch) => (
-                <TableRow key={batch.id}>
-                  <TableCell className="font-medium">#{batch.batchNumber}</TableCell>
-                  <TableCell>
-                    <Badge variant={statusVariantMap[batch.status] || 'default'}>{batch.status}</Badge>
-                  </TableCell>
-                  <TableCell className="text-center">{batch.items.length}</TableCell>
-                  <TableCell className="hidden md:table-cell">{format(batch.plannedDate, 'dd/MM/yyyy')}</TableCell>
-                  <TableCell className="hidden md:table-cell">{format(batch.productionDate, 'dd/MM/yyyy')}</TableCell>
-                  <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button aria-haspopup="true" size="icon" variant="ghost">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Toggle menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem>View Details</DropdownMenuItem>
-                      <DropdownMenuItem>Generate QR Codes</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  </TableCell>
+        title="Production Planning"
+        description="View pending orders and group them for new batches."
+      />
+
+      <div className="grid gap-4 lg:grid-cols-2 lg:gap-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Pending Order Details</CardTitle>
+            <CardDescription>
+              All individual order items waiting for production.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Order</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Product</TableHead>
+                  <TableHead className="text-center">Qty</TableHead>
+                  <TableHead>Date</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {pendingOrders.map((detail) => (
+                  <TableRow key={detail.id}>
+                    <TableCell className="font-medium">
+                      #{detail.orderId}-{detail.id}
+                    </TableCell>
+                    <TableCell>{getClientName(detail.clientId)}</TableCell>
+                    <TableCell>{detail.productName}</TableCell>
+                    <TableCell className="text-center">
+                      {detail.quantity}
+                    </TableCell>
+                    <TableCell>
+                      {format(
+                        orderDetails.find((o) => o.orderId === detail.orderId)
+                          ?.productionDate || new Date(),
+                        'dd/MM/yyyy'
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {pendingOrders.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center">
+                      No pending orders.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Pending Orders by Product</CardTitle>
+            <CardDescription>
+              Total quantities of pending products grouped together.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Product</TableHead>
+                  <TableHead className="text-center">Total Quantity</TableHead>
+                  <TableHead className="text-center"># Orders</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {groupedPendingOrders.map((product) => (
+                  <TableRow key={product.productName}>
+                    <TableCell className="font-medium">
+                      {product.productName}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {product.totalQuantity}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {product.count}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {groupedPendingOrders.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center">
+                      No pending orders.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
     </>
   );
 }

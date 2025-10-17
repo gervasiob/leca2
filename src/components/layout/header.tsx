@@ -23,6 +23,7 @@ import {
   Settings,
   User,
   List,
+  FileText,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -40,6 +41,7 @@ const navLinks = [
   { href: '/accounts-receivable', icon: Users, label: 'Accounts Receivable' },
   { href: '/sales/orders', icon: ShoppingCart, label: 'Sales' },
   { href: '/production/batches', icon: Factory, label: 'Production' },
+  { href: '/dispatch', icon: FileText, label: 'Dispatch' },
   { href: '/price-lists', icon: ClipboardList, label: 'Price Lists' },
   { href: '/sales/claims', icon: MessageSquareWarning, label: 'Claims' },
 ];

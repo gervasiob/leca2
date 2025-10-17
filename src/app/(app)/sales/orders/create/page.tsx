@@ -30,9 +30,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { clients, products, orderDetails } from '@/lib/data';
-import type { Client, Product, OrderDetail } from '@/lib/types';
+import type { Client } from '@/lib/types';
 import { ChevronLeft, PlusCircle, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Combobox } from '@/components/ui/combobox';
 
 type OrderItem = {
   productId: number;
@@ -64,6 +65,15 @@ export default function CreateOrderPage() {
   const selectedProduct = useMemo(() => {
     return products.find(p => p.id === parseInt(currentItem.productId, 10));
   }, [currentItem.productId]);
+
+  const productOptions = useMemo(() => {
+    return products.map(p => ({ value: p.id.toString(), label: p.name }));
+  }, []);
+
+  const colorOptions = useMemo(() => {
+    return selectedProduct?.colors.map(c => ({ value: c, label: c })) || [];
+  }, [selectedProduct]);
+
 
   useEffect(() => {
     if (selectedProduct && selectedProduct.colors.length > 0) {
@@ -179,37 +189,26 @@ export default function CreateOrderPage() {
                 <div className="grid md:grid-cols-5 gap-4 items-end">
                     <div className='md:col-span-2'>
                         <Label htmlFor='product-select'>Product</Label>
-                        <Select value={currentItem.productId} onValueChange={(value) => setCurrentItem({...currentItem, productId: value, color: ''})}>
-                            <SelectTrigger id="product-select">
-                                <SelectValue placeholder="Select a product"/>
-                            </SelectTrigger>
-                            <SelectContent>
-                                {products.map(product => (
-                                    <SelectItem key={product.id} value={product.id.toString()}>
-                                        {product.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <Combobox
+                            options={productOptions}
+                            value={currentItem.productId}
+                            onChange={(value) => setCurrentItem({ ...currentItem, productId: value, color: '' })}
+                            placeholder='Select a product'
+                            searchPlaceholder='Search products...'
+                            noResultsMessage='No products found.'
+                         />
                     </div>
                      <div>
                         <Label htmlFor='color-select'>Color</Label>
-                        <Select
+                        <Combobox
+                            options={colorOptions}
                             value={currentItem.color}
-                            onValueChange={(value) => setCurrentItem({...currentItem, color: value})}
-                            disabled={!selectedProduct}
-                        >
-                            <SelectTrigger id="color-select">
-                                <SelectValue placeholder="Select a color"/>
-                            </SelectTrigger>
-                            <SelectContent>
-                                {selectedProduct?.colors.map(color => (
-                                    <SelectItem key={color} value={color}>
-                                        {color}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                            onChange={(value) => setCurrentItem({ ...currentItem, color: value })}
+                            placeholder='Select a color'
+                            searchPlaceholder='Search colors...'
+                            noResultsMessage='No colors found.'
+                            className={!selectedProduct ? "disabled:cursor-not-allowed disabled:opacity-50" : ""}
+                        />
                      </div>
                     <div>
                         <Label htmlFor='quantity-input'>Quantity</Label>

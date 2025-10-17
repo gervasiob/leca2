@@ -1,4 +1,3 @@
-
 import { PageHeader } from '@/components/page-header';
 import {
   Card,
@@ -16,13 +15,21 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { orderDetails, clients } from '@/lib/data';
+import { orderDetails, clients, productionBatches } from '@/lib/data';
 import { format } from 'date-fns';
 import type { OrderDetail } from '@/lib/types';
+import { Button } from '@/components/ui/button';
 
 const getClientName = (clientId: number) => {
   return clients.find((c) => c.id === clientId)?.name || 'N/A';
 };
+
+const statusVariantMap: { [key: string]: 'default' | 'secondary' | 'outline' } = {
+  'Planned': 'outline',
+  'In Progress': 'secondary',
+  'Completed': 'default',
+};
+
 
 export default function ProductionBatchesPage() {
   const pendingOrders = orderDetails.filter(
@@ -55,7 +62,9 @@ export default function ProductionBatchesPage() {
       <PageHeader
         title="Production Planning"
         description="View pending orders and group them for new batches."
-      />
+      >
+        <Button>Create Batch</Button>
+    </PageHeader>
 
       <div className="grid gap-4 lg:grid-cols-2 lg:gap-8">
         <Card>
@@ -149,6 +158,46 @@ export default function ProductionBatchesPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="mt-8">
+        <CardHeader>
+            <CardTitle>Production Batches</CardTitle>
+            <CardDescription>
+                Current and past production batches.
+            </CardDescription>
+        </CardHeader>
+        <CardContent>
+        <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Batch #</TableHead>
+                  <TableHead>Items</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Production Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {productionBatches.map((batch) => (
+                  <TableRow key={batch.id}>
+                    <TableCell className="font-medium">{batch.batchNumber}</TableCell>
+                    <TableCell>{batch.items.length}</TableCell>
+                    <TableCell>
+                        <Badge variant={statusVariantMap[batch.status] || 'default'}>{batch.status}</Badge>
+                    </TableCell>
+                    <TableCell>{format(batch.productionDate, 'PPP')}</TableCell>
+                  </TableRow>
+                ))}
+                {productionBatches.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center">
+                      No production batches found.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+        </CardContent>
+      </Card>
     </>
   );
 }

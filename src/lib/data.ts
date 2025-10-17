@@ -8,13 +8,13 @@ export const clients: Client[] = [
 ];
 
 export const products: Product[] = [
-    { id: 1, name: 'Pintura Látex Interior Mate 20L', type: 'Pintura', application: 'Rodillo', colors: ['Blanco', 'Gris Perla', 'Marfil', 'Azul Profundo'] },
-    { id: 2, name: 'Esmalte Sintético Brillante 4L', type: 'Esmalte', application: 'Pincel', colors: ['Blanco', 'Negro', 'Rojo', 'Azul Marino'] },
-    { id: 3, name: 'Impermeabilizante Techos 10L', type: 'Impermeabilizante', application: 'Rodillo', colors: ['Rojo', 'Verde', 'Blanco', 'Gris'] },
-    { id: 4, name: 'Barniz Marino Exterior 1L', type: 'Barniz', application: 'Pincel', colors: ['Transparente', 'Caoba', 'Roble', 'Nogal'] },
-    { id: 5, name: 'Pintura Epoxi Pisos Alto Tránsito 4L', type: 'Epoxi', application: 'Rodillo', colors: ['Gris Cemento', 'Azul', 'Verde Esmeralda', 'Beige'] },
-    { id: 6, name: 'Texturado Fino', type: 'Texturado', application: 'Llana', colors: ['Arena', 'Piedra', 'Blanco Tiza', 'Gris Urbano'] },
-    { id: 7, name: 'Texturado Mediano', type: 'Texturado', application: 'Llana', colors: ['Gris Cemento', 'Terracota', 'Natural', 'Beige Almendra'] },
+    { id: 1, name: 'Pintura Látex Interior Mate 20L', type: 'Pintura', application: 'Rodillo', colors: ['Blanco', 'Gris Perla', 'Marfil', 'Azul Profundo'], status: 'active' },
+    { id: 2, name: 'Esmalte Sintético Brillante 4L', type: 'Esmalte', application: 'Pincel', colors: ['Blanco', 'Negro', 'Rojo', 'Azul Marino'], status: 'active' },
+    { id: 3, name: 'Impermeabilizante Techos 10L', type: 'Impermeabilizante', application: 'Rodillo', colors: ['Rojo', 'Verde', 'Blanco', 'Gris'], status: 'active' },
+    { id: 4, name: 'Barniz Marino Exterior 1L', type: 'Barniz', application: 'Pincel', colors: ['Transparente', 'Caoba', 'Roble', 'Nogal'], status: 'active' },
+    { id: 5, name: 'Pintura Epoxi Pisos Alto Tránsito 4L', type: 'Epoxi', application: 'Rodillo', colors: ['Gris Cemento', 'Azul', 'Verde Esmeralda', 'Beige'], status: 'active' },
+    { id: 6, name: 'Texturado Fino', type: 'Texturado', application: 'Llana', colors: ['Arena', 'Piedra', 'Blanco Tiza', 'Gris Urbano'], status: 'active' },
+    { id: 7, name: 'Texturado Mediano', type: 'Texturado', application: 'Llana', colors: ['Gris Cemento', 'Terracota', 'Natural', 'Beige Almendra'], status: 'active' },
 ];
 
 export const orders: Order[] = [

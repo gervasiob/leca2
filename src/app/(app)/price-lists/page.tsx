@@ -19,8 +19,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
-import { products, orderDetails } from '@/lib/data';
-import { MoreHorizontal, Upload, Download, FileUp, Percent, DollarSign, X } from 'lucide-react';
+import { products as initialProducts, orderDetails } from '@/lib/data';
+import type { Product } from '@/lib/types';
+import { MoreHorizontal, Upload, Download, FileUp, Percent, DollarSign, X, ShieldCheck, ShieldOff } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,6 +42,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import Papa from 'papaparse';
+import { Badge } from '@/components/ui/badge';
 
 type PriceUpdatePreview = {
   'ID Producto': string;
@@ -48,7 +50,6 @@ type PriceUpdatePreview = {
   'Precio Anterior': number;
   'Precio Nuevo': number;
 };
-
 
 const getProductPrice = (productId: number) => {
   // Find a recent order detail for this product to get a price
@@ -58,6 +59,7 @@ const getProductPrice = (productId: number) => {
 
 export default function PriceListsPage() {
   const { toast } = useToast();
+  const [products, setProducts] = useState<Product[]>(initialProducts);
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [previewData, setPreviewData] = useState<PriceUpdatePreview[]>([]);
@@ -68,14 +70,13 @@ export default function PriceListsPage() {
   const [percentUpdate, setPercentUpdate] = useState('');
   const [valueUpdate, setValueUpdate] = useState('');
 
-
   useEffect(() => {
     const initialPrices: Record<number, number> = {};
     products.forEach(product => {
       initialPrices[product.id] = getProductPrice(product.id);
     });
     setPrices(initialPrices);
-  }, []);
+  }, [products]);
   
   const filteredProducts = useMemo(() => {
     return products.filter(p => 
@@ -83,7 +84,7 @@ export default function PriceListsPage() {
         p.type.toLowerCase().includes(filter.toLowerCase()) ||
         p.application.toLowerCase().includes(filter.toLowerCase())
     );
-  }, [filter]);
+  }, [filter, products]);
 
   const handleSelectProduct = (productId: number, checked: boolean) => {
     setSelectedProducts(prev => {
@@ -134,6 +135,21 @@ export default function PriceListsPage() {
     setSelectedProducts(new Set());
     setPercentUpdate('');
     setValueUpdate('');
+  }
+  
+  const handleStatusUpdate = (status: 'active' | 'inactive') => {
+    const newProducts = products.map(p => {
+        if(selectedProducts.has(p.id)) {
+            return {...p, status: status};
+        }
+        return p;
+    });
+    setProducts(newProducts);
+    toast({
+        title: "Estados Actualizados",
+        description: `${selectedProducts.size} productos han sido marcados como '${status === 'active' ? 'activos' : 'inactivos'}'.`
+    });
+    setSelectedProducts(new Set());
   }
 
   const handleDownloadTemplate = (isTemplate: boolean = true) => {
@@ -207,7 +223,6 @@ export default function PriceListsPage() {
   }
 
   const handleApplyUpdate = () => {
-    console.log("Applying updates:", previewData);
     const newPrices = { ...prices };
     previewData.forEach(item => {
         newPrices[parseInt(item['ID Producto'])] = item['Precio Nuevo'];
@@ -327,36 +342,47 @@ export default function PriceListsPage() {
             <CardHeader>
                 <CardTitle className='text-lg'>Actualización Rápida</CardTitle>
                 <CardDescription>
-                    Aplicar un cambio de precio a los {selectedProducts.size} productos seleccionados.
+                    Aplicar cambios a los {selectedProducts.size} productos seleccionados.
                 </CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col sm:flex-row gap-4 items-center">
-                <div className='flex-1 w-full sm:w-auto'>
+            <CardContent className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 items-center">
+                <div className='flex flex-col gap-2'>
                     <Label htmlFor="percent-update">Aumentar por Porcentaje</Label>
-                    <div className='relative'>
-                        <Percent className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
-                        <Input id="percent-update" type="number" placeholder='Ej: 15' className='pl-8' value={percentUpdate} onChange={e => setPercentUpdate(e.target.value)} />
+                    <div className='flex gap-2'>
+                        <div className='relative flex-1'>
+                            <Percent className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
+                            <Input id="percent-update" type="number" placeholder='Ej: 15' className='pl-8' value={percentUpdate} onChange={e => setPercentUpdate(e.target.value)} />
+                        </div>
+                        <Button onClick={() => handleBulkUpdate('percent')} disabled={!percentUpdate}>Aplicar %</Button>
                     </div>
                 </div>
-                <Button onClick={() => handleBulkUpdate('percent')} disabled={!percentUpdate}>Aplicar %</Button>
 
-                <div className='flex-1 w-full sm:w-auto'>
+                <div className='flex flex-col gap-2'>
                     <Label htmlFor="value-update">Aumentar por Valor Fijo</Label>
-                     <div className='relative'>
-                        <DollarSign className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
-                        <Input id="value-update" type="number" placeholder='Ej: 500' className='pl-8' value={valueUpdate} onChange={e => setValueUpdate(e.target.value)} />
+                    <div className='flex gap-2'>
+                        <div className='relative flex-1'>
+                            <DollarSign className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
+                            <Input id="value-update" type="number" placeholder='Ej: 500' className='pl-8' value={valueUpdate} onChange={e => setValueUpdate(e.target.value)} />
+                        </div>
+                        <Button onClick={() => handleBulkUpdate('value')} disabled={!valueUpdate}>Aplicar $</Button>
                     </div>
                 </div>
-                <Button onClick={() => handleBulkUpdate('value')} disabled={!valueUpdate}>Aplicar $</Button>
                 
-                <div className='border-l h-10 mx-4 hidden sm:block' />
-
-                <Button variant="ghost" size="icon" className='self-end' onClick={() => setSelectedProducts(new Set())}>
-                    <X className="h-4 w-4" />
-                    <span className='sr-only'>Deseleccionar todo</span>
-                </Button>
+                <div className='flex flex-col gap-2'>
+                    <Label>Cambiar Estado</Label>
+                    <div className='flex gap-2'>
+                        <Button variant='outline' className='flex-1' onClick={() => handleStatusUpdate('active')}><ShieldCheck className="mr-2"/>Activar</Button>
+                        <Button variant='destructive' className='flex-1' onClick={() => handleStatusUpdate('inactive')}><ShieldOff className="mr-2"/>Inactivar</Button>
+                    </div>
+                </div>
 
             </CardContent>
+             <CardFooter className='justify-end'>
+                <Button variant="ghost" size="sm" onClick={() => setSelectedProducts(new Set())}>
+                    <X className="mr-2 h-4 w-4" />
+                    Deseleccionar todo ({selectedProducts.size})
+                </Button>
+             </CardFooter>
         </Card>
       )}
 
@@ -387,8 +413,7 @@ export default function PriceListsPage() {
                 </TableHead>
                 <TableHead>ID Producto</TableHead>
                 <TableHead>Nombre del Producto</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Aplicación</TableHead>
+                <TableHead>Estado</TableHead>
                 <TableHead className="text-right">Precio Unitario</TableHead>
                 <TableHead>
                   <span className="sr-only">Acciones</span>
@@ -406,12 +431,13 @@ export default function PriceListsPage() {
                   </TableCell>
                   <TableCell className="font-medium">#{product.id}</TableCell>
                   <TableCell>{product.name}</TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {product.type}
+                   <TableCell>
+                    <Badge variant={product.status === 'active' ? 'default' : 'destructive'}>
+                        {product.status === 'active' ? 'Activo' : 'Inactivo'}
+                    </Badge>
                   </TableCell>
-                  <TableCell>{product.application}</TableCell>
                   <TableCell className="text-right">
-                    ${(prices[product.id] || 0).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    ${prices[product.id]?.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) || '0'}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>

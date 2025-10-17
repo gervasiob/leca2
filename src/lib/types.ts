@@ -6,6 +6,7 @@ export interface Product {
     type: string;
     application: string;
     colors: string[];
+    status: 'active' | 'inactive';
 }
 
 export interface OrderDetail {

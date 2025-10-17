@@ -85,15 +85,20 @@
 
 @layer utilities {
     @media print {
-        .no-print {
-            display: none;
+        body * {
+            visibility: hidden;
         }
-        body {
-            background-color: #fff;
+        .printable-area, .printable-area * {
+            visibility: visible;
         }
         .printable-area {
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+        }
+        .no-print {
+            display: none;
         }
     }
 }

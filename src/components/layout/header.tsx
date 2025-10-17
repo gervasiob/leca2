@@ -24,6 +24,7 @@ import {
   FileText,
   UserCog,
   LogOut,
+  Building2,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -36,14 +37,21 @@ import {
   AccordionTrigger,
 } from '../ui/accordion';
 
-const navLinks = [
+const mainNavLinks = [
   { href: '/dashboard', icon: Home, label: 'Tablero' },
   { href: '/accounts-receivable', icon: Users, label: 'Cuentas por Cobrar' },
-  { href: '/sales/orders', icon: ShoppingCart, label: 'Ventas' },
+];
+
+const salesNavLinks = [
+    { href: '/sales/orders', icon: ShoppingCart, label: 'Pedidos' },
+    { href: '/sales/clients', icon: Building2, label: 'Clientes' },
+    { href: '/sales/claims', icon: MessageSquareWarning, label: 'Reclamos' },
+];
+
+const otherNavLinks = [
   { href: '/production/batches', icon: Factory, label: 'Producción' },
   { href: '/dispatch', icon: FileText, label: 'Remitos' },
   { href: '/price-lists', icon: ClipboardList, label: 'Listas de Precios' },
-  { href: '/sales/claims', icon: MessageSquareWarning, label: 'Reclamos' },
 ];
 
 const settingsLinks = [
@@ -58,7 +66,22 @@ export function Header() {
 
   const handleLogout = () => {
     router.push('/login');
-  }
+  };
+
+  const renderLink = (href: string, Icon: React.ElementType, label: string) => (
+     <Link
+        key={href}
+        href={href}
+        className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
+          pathname.startsWith(href)
+            ? 'text-primary bg-muted'
+            : 'text-muted-foreground hover:text-primary'
+        }`}
+      >
+        <Icon className="h-5 w-5" />
+        {label}
+      </Link>
+  );
 
   return (
     <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-30">
@@ -87,20 +110,25 @@ export function Header() {
               <PaintBucketIcon className="h-6 w-6 text-primary" />
               <span>Fábrica de Pintura</span>
             </Link>
-            {navLinks.map(({ href, icon: Icon, label }) => (
-              <Link
-                key={href}
-                href={href}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
-                  pathname.startsWith(href)
-                    ? 'text-primary bg-muted'
-                    : 'text-muted-foreground hover:text-primary'
-                }`}
-              >
-                <Icon className="h-5 w-5" />
-                {label}
-              </Link>
-            ))}
+            
+            {mainNavLinks.map(({ href, icon: Icon, label }) => renderLink(href, Icon, label))}
+            
+            <Accordion type="single" collapsible className="w-full" defaultValue={pathname.startsWith('/sales') ? 'sales' : undefined}>
+              <AccordionItem value="sales" className="border-b-0">
+                <AccordionTrigger className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground hover:text-primary hover:no-underline [&[data-state=open]>svg]:rotate-180">
+                   <ShoppingCart className="h-5 w-5" />
+                   <span>Ventas</span>
+                </AccordionTrigger>
+                <AccordionContent className="pl-8">
+                  <nav className="grid gap-1">
+                    {salesNavLinks.map(({ href, icon: Icon, label }) => renderLink(href, Icon, label))}
+                  </nav>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+            
+            {otherNavLinks.map(({ href, icon: Icon, label }) => renderLink(href, Icon, label))}
+
           </nav>
           <div className="mt-auto">
              <Accordion type="single" collapsible className="w-full">
@@ -111,20 +139,7 @@ export function Header() {
                 </AccordionTrigger>
                 <AccordionContent className="pl-8">
                   <nav className="grid gap-2">
-                    {settingsLinks.map(({ href, icon: Icon, label }) => (
-                       <Link
-                        key={href}
-                        href={href}
-                        className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
-                          pathname.startsWith(href)
-                            ? 'text-primary bg-muted'
-                            : 'text-muted-foreground hover:text-primary'
-                        }`}
-                      >
-                        <Icon className="h-5 w-5" />
-                        {label}
-                      </Link>
-                    ))}
+                    {settingsLinks.map(({ href, icon: Icon, label }) => renderLink(href, Icon, label))}
                   </nav>
                 </AccordionContent>
               </AccordionItem>

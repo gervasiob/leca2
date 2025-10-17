@@ -26,6 +26,7 @@ import {
   List,
   FileText,
   UserCog,
+  Building2,
 } from 'lucide-react';
 import { PaintBucketIcon } from '../icons';
 import { cn } from '@/lib/utils';
@@ -34,11 +35,18 @@ import { Button } from '../ui/button';
 const navLinks = [
   { href: '/dashboard', icon: Home, label: 'Tablero' },
   { href: '/accounts-receivable', icon: Users, label: 'Cuentas por Cobrar' },
-  { href: '/sales/orders', icon: ShoppingCart, label: 'Ventas' },
+];
+
+const salesLinks = [
+    { href: '/sales/orders', icon: ShoppingCart, label: 'Pedidos' },
+    { href: '/sales/clients', icon: Building2, label: 'Clientes' },
+    { href: '/sales/claims', icon: MessageSquareWarning, label: 'Reclamos' },
+];
+
+const otherLinks = [
   { href: '/production/batches', icon: Factory, label: 'Producción' },
   { href: '/dispatch', icon: FileText, label: 'Remitos' },
   { href: '/price-lists', icon: ClipboardList, label: 'Listas de Precios' },
-  { href: '/sales/claims', icon: MessageSquareWarning, label: 'Reclamos' },
 ];
 
 const settingsLinks = [
@@ -49,6 +57,8 @@ const settingsLinks = [
 
 export function Sidebar() {
   const pathname = usePathname();
+
+  const isSalesActive = pathname.startsWith('/sales');
 
   return (
     <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex">
@@ -61,7 +71,56 @@ export function Sidebar() {
             <PaintBucketIcon className="h-5 w-5 transition-all group-hover:scale-110" />
             <span className="sr-only">Fábrica de Pintura</span>
           </Link>
+          
           {navLinks.map(({ href, icon: Icon, label }) => (
+            <Tooltip key={href}>
+              <TooltipTrigger asChild>
+                <Link
+                  href={href}
+                  className={cn(
+                    'flex h-9 w-9 items-center justify-center rounded-lg transition-colors md:h-8 md:w-8',
+                    pathname.startsWith(href)
+                      ? 'bg-accent text-accent-foreground'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                  <span className="sr-only">{label}</span>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right">{label}</TooltipContent>
+            </Tooltip>
+          ))}
+          
+          <DropdownMenu>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                        <Button
+                            variant={isSalesActive ? 'accent' : 'ghost'}
+                            size="icon"
+                            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                        >
+                            <ShoppingCart className="h-5 w-5" />
+                            <span className="sr-only">Ventas</span>
+                        </Button>
+                    </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="right">Ventas</TooltipContent>
+            </Tooltip>
+            <DropdownMenuContent side="right" align="start">
+                {salesLinks.map(({ href, icon: Icon, label }) => (
+                    <DropdownMenuItem key={href} asChild>
+                        <Link href={href} className="flex items-center gap-2">
+                            <Icon className="h-4 w-4" />
+                            <span>{label}</span>
+                        </Link>
+                    </DropdownMenuItem>
+                ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {otherLinks.map(({ href, icon: Icon, label }) => (
             <Tooltip key={href}>
               <TooltipTrigger asChild>
                 <Link

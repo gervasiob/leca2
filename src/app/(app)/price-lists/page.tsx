@@ -136,19 +136,19 @@ export default function PriceListsPage() {
     setValueUpdate('');
   }
 
-  const handleDownloadTemplate = () => {
-    const templateData = products.map(p => ({
+  const handleDownloadTemplate = (isTemplate: boolean = true) => {
+    const dataToDownload = products.map(p => ({
         'ID Producto': p.id,
         'Nombre del Producto': p.name,
-        'Precio Unitario': prices[p.id] || 0
+        'Precio Unitario': isTemplate ? '' : prices[p.id] || 0
     }));
 
-    const csv = Papa.unparse(templateData);
+    const csv = Papa.unparse(dataToDownload);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', 'plantilla_precios.csv');
+    link.setAttribute('download', isTemplate ? 'plantilla_precios.csv' : 'lista_de_precios_actual.csv');
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -228,6 +228,10 @@ export default function PriceListsPage() {
         title="Listas de Precios"
         description="Gestiona los precios de los productos y los descuentos de los clientes."
       >
+        <Button variant="outline" onClick={() => handleDownloadTemplate(false)}>
+            <Download className="mr-2" />
+            Descargar Lista
+        </Button>
         <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -251,7 +255,7 @@ export default function PriceListsPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Button variant="outline" onClick={handleDownloadTemplate}>
+                        <Button variant="outline" onClick={() => handleDownloadTemplate(true)}>
                            <Download className="mr-2" />
                            Descargar Plantilla CSV
                         </Button>

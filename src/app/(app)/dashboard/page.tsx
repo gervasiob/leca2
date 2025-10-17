@@ -44,6 +44,7 @@ import {
 } from '@/components/ui/popover';
 import { DateRange } from 'react-day-picker';
 import { cn } from '@/lib/utils';
+import type { OrderDetail } from '@/lib/types';
 
 export default function Dashboard() {
   const [date, setDate] = useState<DateRange | undefined>({
@@ -55,8 +56,7 @@ export default function Dashboard() {
   const [pendingRevenue, setPendingRevenue] = useState(0);
   const [clientsWithPendingBalance, setClientsWithPendingBalance] = useState(0);
   const [pendingToProduceAmount, setPendingToProduceAmount] = useState(0);
-  
-  const recentActivities = orderDetails.slice(0, 5);
+  const [recentActivities, setRecentActivities] = useState<OrderDetail[]>([]);
   
   useEffect(() => {
     const calculatedTotalRevenue = orders
@@ -95,6 +95,7 @@ export default function Dashboard() {
     setPendingToProduceAmount(calculatedPendingToProduceAmount);
     setPendingRevenue(calculatedPendingRevenue);
     setClientsWithPendingBalance(calculatedClientsWithPendingBalance);
+    setRecentActivities(orderDetails.slice(0, 5));
   }, [date]);
 
 

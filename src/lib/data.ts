@@ -74,4 +74,5 @@ export const roles: Role[] = [
     { id: 1, name: 'Admin', permissions: [...screens] },
     { id: 2, name: 'Ventas', permissions: ['Tablero', 'Cuentas por Cobrar', 'Ventas', 'Remitos', 'Listas de Precios', 'Reclamos'] },
     { id: 3, name: 'Producción', permissions: ['Tablero', 'Producción', 'Remitos'] },
+    { id: 4, name: 'Invitado', permissions: [] },
 ];

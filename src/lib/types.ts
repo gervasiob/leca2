@@ -86,7 +86,7 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  role: 'Admin' | 'Sales' | 'Production';
+  role: 'Admin' | 'Sales' | 'Production' | 'Invitado';
   lastLogin: Date;
 }
 

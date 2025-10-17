@@ -1,3 +1,6 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -18,11 +21,56 @@ import { PageHeader } from '@/components/page-header';
 import { clients, orderDetails, orders, claims } from '@/lib/data';
 import { SalesChart } from './sales-chart';
 import { StatusChart } from './status-chart';
-import { DollarSign, Users, Package, AlertCircle } from 'lucide-react';
-import { format } from 'date-fns';
+import {
+  DollarSign,
+  Users,
+  Package,
+  AlertCircle,
+  Calendar as CalendarIcon,
+  Activity,
+} from 'lucide-react';
+import { format, subDays, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { DateRange } from 'react-day-picker';
+import { cn } from '@/lib/utils';
 
 export default function Dashboard() {
-  const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date()),
+  });
+
+  const totalRevenue = orders
+    .filter((order) => {
+      if (!date?.from || !date?.to) return true;
+      return isWithinInterval(order.orderDate, { start: date.from, end: date.to });
+    })
+    .reduce((sum, order) => sum + order.totalAmount, 0);
+    
+  const pendingToProduceAmount = orderDetails
+    .filter((od) => od.status === 'pending')
+    .reduce((acc, od) => acc + od.totalPrice, 0);
+
+  const pendingRevenue = orderDetails
+    .filter(
+      (od) => od.status !== 'delivered' && od.status !== 'resolved'
+    )
+    .reduce((acc, od) => acc + od.totalPrice, 0);
+
+  const clientsWithPendingBalance = clients.filter(client => {
+    const balance = orderDetails
+        .filter(od => od.clientId === client.id && od.status !== 'delivered' && od.status !== 'resolved')
+        .reduce((acc, od) => acc + od.totalPrice, 0);
+    return balance > 0;
+  }).length;
+
+
   const recentActivities = orderDetails.slice(0, 5);
 
   return (
@@ -30,8 +78,45 @@ export default function Dashboard() {
       <PageHeader
         title="Dashboard"
         description="An overview of your factory's performance."
-      />
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      >
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              id="date"
+              variant={'outline'}
+              className={cn(
+                'w-[300px] justify-start text-left font-normal',
+                !date && 'text-muted-foreground'
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {date?.from ? (
+                date.to ? (
+                  <>
+                    {format(date.from, 'LLL dd, y')} -{' '}
+                    {format(date.to, 'LLL dd, y')}
+                  </>
+                ) : (
+                  format(date.from, 'LLL dd, y')
+                )
+              ) : (
+                <span>Pick a date</span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="end">
+            <Calendar
+              initialFocus
+              mode="range"
+              defaultMonth={date?.from}
+              selected={date}
+              onSelect={setDate}
+              numberOfMonths={2}
+            />
+          </PopoverContent>
+        </Popover>
+      </PageHeader>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
@@ -42,38 +127,47 @@ export default function Dashboard() {
               ${totalRevenue.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              +20.1% from last month
+              Selected period revenue
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
+            <CardTitle className="text-sm font-medium">Pending Revenue</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+                ${pendingRevenue.toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Total amount pending collection.
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Clients with Debt</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+{clients.length}</div>
+            <div className="text-2xl font-bold">+{clientsWithPendingBalance}</div>
             <p className="text-xs text-muted-foreground">
-              +1 since last month
+              Clients with pending balances.
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Orders</CardTitle>
+            <CardTitle className="text-sm font-medium">Pending Production</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {
-                orderDetails.filter(
-                  (od) =>
-                    od.status === 'pending' || od.status === 'produced'
-                ).length
-              }
+                ${pendingToProduceAmount.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              {orderDetails.filter((od) => od.status === 'pending').length} pending, {orderDetails.filter((od) => od.status === 'produced').length} in production
+              Value of items pending production.
             </p>
           </CardContent>
         </Card>
@@ -113,34 +207,42 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
-       <Card className="mt-4">
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>A log of the most recent order updates.</CardDescription>
-          </CardHeader>
-          <CardContent>
-             <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Order ID</TableHead>
-                        <TableHead>Product</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Date</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {recentActivities.map(activity => (
-                        <TableRow key={activity.id}>
-                            <TableCell className="font-medium">#{activity.orderId}</TableCell>
-                            <TableCell>{activity.productName}</TableCell>
-                            <TableCell><Badge variant="outline">{activity.status}</Badge></TableCell>
-                            <TableCell>{format(activity.productionDate || new Date(), 'PPP')}</TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-             </Table>
-          </CardContent>
-        </Card>
+      <Card className="mt-4">
+        <CardHeader>
+          <CardTitle>Recent Activity</CardTitle>
+          <CardDescription>
+            A log of the most recent order updates.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Order ID</TableHead>
+                <TableHead>Product</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Date</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {recentActivities.map((activity) => (
+                <TableRow key={activity.id}>
+                  <TableCell className="font-medium">
+                    #{activity.orderId}
+                  </TableCell>
+                  <TableCell>{activity.productName}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{activity.status}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    {format(activity.productionDate || new Date(), 'PPP')}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }

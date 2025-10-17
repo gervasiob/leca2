@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { orderDetails, orders, clients } from '@/lib/data';
-import type { OrderDetail } from '@/lib/types';
+import type { OrderDetail, OrderDetailStatus } from '@/lib/types';
 import { MoreHorizontal, ArrowUpDown } from 'lucide-react';
 import {
     DropdownMenu,
@@ -37,6 +37,15 @@ import { Input } from '@/components/ui/input';
 type SortKey = keyof OrderDetail | 'clientName' | 'orderDate' | 'totalPrice';
 type SortDirection = 'asc' | 'desc';
 
+const statusTranslations: Record<OrderDetailStatus, string> = {
+    pending: "Pendiente",
+    produced: "Producido",
+    dispatched: "Despachado",
+    delivered: "Entregado",
+    claimed: "Reclamado",
+    resolved: "Resuelto",
+    cancelled: "Cancelado"
+};
 
 const getClientName = (clientId: number) => {
     return clients.find(c => c.id === clientId)?.name || 'N/A';
@@ -46,12 +55,14 @@ const getOrderDate = (orderId: number) => {
     return orders.find(o => o.id === orderId)?.orderDate || new Date();
 }
 
-const statusVariantMap: { [key: string]: "default" | "secondary" | "destructive" | "outline" } = {
+const statusVariantMap: { [key in OrderDetailStatus]: "default" | "secondary" | "destructive" | "outline" } = {
     pending: "outline",
     produced: "secondary",
     dispatched: "default",
     delivered: "default",
     claimed: "destructive",
+    resolved: "default",
+    cancelled: "destructive",
 }
 
 export default function SalesOrdersPage() {
@@ -141,20 +152,20 @@ export default function SalesOrdersPage() {
   return (
     <>
       <PageHeader
-        title="Sales & Orders"
-        description="Manage all order details from creation to delivery."
+        title="Ventas y Pedidos"
+        description="Gestiona todos los detalles de los pedidos, desde la creación hasta la entrega."
       >
         <Button asChild>
-          <Link href="/sales/orders/create">Create New Order</Link>
+          <Link href="/sales/orders/create">Crear Nuevo Pedido</Link>
         </Button>
       </PageHeader>
       <Card>
         <CardHeader>
-          <CardTitle>Order Details</CardTitle>
-          <CardDescription>All items across all orders.</CardDescription>
+          <CardTitle>Detalles de Pedidos</CardTitle>
+          <CardDescription>Todos los ítems de todos los pedidos.</CardDescription>
           <div className="pt-4">
               <Input
-                placeholder="Filter by order, client or product..."
+                placeholder="Filtrar por pedido, cliente o producto..."
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
                 className="max-w-sm"
@@ -165,16 +176,16 @@ export default function SalesOrdersPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <SortableHeader sortKey="orderId">Order</SortableHeader>
-                <SortableHeader sortKey="clientName">Client</SortableHeader>
-                <SortableHeader sortKey="productName">Product</SortableHeader>
+                <SortableHeader sortKey="orderId">Pedido</SortableHeader>
+                <SortableHeader sortKey="clientName">Cliente</SortableHeader>
+                <SortableHeader sortKey="productName">Producto</SortableHeader>
                 <SortableHeader sortKey="color">Color</SortableHeader>
-                <SortableHeader sortKey="quantity" className="text-center">Qty</SortableHeader>
-                <SortableHeader sortKey="status">Status</SortableHeader>
-                <SortableHeader sortKey="orderDate" className="hidden md:table-cell">Date</SortableHeader>
+                <SortableHeader sortKey="quantity" className="text-center">Cant.</SortableHeader>
+                <SortableHeader sortKey="status">Estado</SortableHeader>
+                <SortableHeader sortKey="orderDate" className="hidden md:table-cell">Fecha</SortableHeader>
                 <SortableHeader sortKey="totalPrice" className="text-right">Total</SortableHeader>
                 <TableHead>
-                    <span className="sr-only">Actions</span>
+                    <span className="sr-only">Acciones</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -187,7 +198,7 @@ export default function SalesOrdersPage() {
                   <TableCell>{detail.color}</TableCell>
                   <TableCell className="text-center">{detail.quantity}</TableCell>
                   <TableCell>
-                    <Badge variant={statusVariantMap[detail.status] || 'default'}>{detail.status}</Badge>
+                    <Badge variant={statusVariantMap[detail.status] || 'default'}>{statusTranslations[detail.status]}</Badge>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">{format(getOrderDate(detail.orderId), 'dd/MM/yyyy')}</TableCell>
                   <TableCell className="text-right">${detail.totalPrice.toLocaleString()}</TableCell>
@@ -196,14 +207,14 @@ export default function SalesOrdersPage() {
                     <DropdownMenuTrigger asChild>
                       <Button aria-haspopup="true" size="icon" variant="ghost">
                         <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Toggle menu</span>
+                        <span className="sr-only">Alternar menú</span>
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem>View Details</DropdownMenuItem>
-                      <DropdownMenuItem>Confirm Dispatch</DropdownMenuItem>
-                      <DropdownMenuItem>File a Claim</DropdownMenuItem>
+                      <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                      <DropdownMenuItem>Ver Detalles</DropdownMenuItem>
+                      <DropdownMenuItem>Confirmar Despacho</DropdownMenuItem>
+                      <DropdownMenuItem>Iniciar Reclamo</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                   </TableCell>
@@ -212,7 +223,7 @@ export default function SalesOrdersPage() {
                {filteredAndSortedDetails.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={9} className="h-24 text-center">
-                    No results found.
+                    No se encontraron resultados.
                   </TableCell>
                 </TableRow>
               )}

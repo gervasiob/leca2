@@ -37,26 +37,26 @@ export default function UserSettingsPage() {
   return (
     <>
       <PageHeader
-        title="User Settings"
-        description="Manage users and their permissions."
+        title="Configuración de Usuarios"
+        description="Gestiona los usuarios y sus permisos."
       >
-        <Button>Create User</Button>
+        <Button>Crear Usuario</Button>
       </PageHeader>
       <Card>
         <CardHeader>
-            <CardTitle>Users</CardTitle>
-            <CardDescription>A list of all the users in your account including their name, title, email and role.</CardDescription>
+            <CardTitle>Usuarios</CardTitle>
+            <CardDescription>Un listado de todos los usuarios de tu cuenta incluyendo su nombre, título, email y rol.</CardDescription>
         </CardHeader>
         <CardContent>
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Name</TableHead>
+                        <TableHead>Nombre</TableHead>
                         <TableHead>Email</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Last Login</TableHead>
+                        <TableHead>Rol</TableHead>
+                        <TableHead>Último Inicio de Sesión</TableHead>
                         <TableHead>
-                            <span className="sr-only">Actions</span>
+                            <span className="sr-only">Acciones</span>
                         </TableHead>
                     </TableRow>
                 </TableHeader>
@@ -74,13 +74,13 @@ export default function UserSettingsPage() {
                                     <DropdownMenuTrigger asChild>
                                     <Button aria-haspopup="true" size="icon" variant="ghost">
                                         <MoreHorizontal className="h-4 w-4" />
-                                        <span className="sr-only">Toggle menu</span>
+                                        <span className="sr-only">Alternar menú</span>
                                     </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
-                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                    <DropdownMenuItem>Edit</DropdownMenuItem>
-                                    <DropdownMenuItem>Delete</DropdownMenuItem>
+                                    <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                    <DropdownMenuItem>Editar</DropdownMenuItem>
+                                    <DropdownMenuItem>Eliminar</DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </TableCell>

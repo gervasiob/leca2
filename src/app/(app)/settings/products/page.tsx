@@ -30,27 +30,27 @@ export default function ProductSettingsPage() {
   return (
     <>
       <PageHeader
-        title="Product Settings"
-        description="Manage product tables and attributes."
+        title="Configuración de Productos"
+        description="Gestiona las tablas y atributos de los productos."
       >
-        <Button>Create Product</Button>
+        <Button>Crear Producto</Button>
       </PageHeader>
       <Card>
         <CardHeader>
-            <CardTitle>Products</CardTitle>
-            <CardDescription>A list of all products in your factory.</CardDescription>
+            <CardTitle>Productos</CardTitle>
+            <CardDescription>Un listado de todos los productos en tu fábrica.</CardDescription>
         </CardHeader>
         <CardContent>
             <Table>
                 <TableHeader>
                     <TableRow>
                         <TableHead>ID</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Application</TableHead>
-                        <TableHead>Colors</TableHead>
+                        <TableHead>Nombre</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Aplicación</TableHead>
+                        <TableHead>Colores</TableHead>
                         <TableHead>
-                            <span className="sr-only">Actions</span>
+                            <span className="sr-only">Acciones</span>
                         </TableHead>
                     </TableRow>
                 </TableHeader>
@@ -73,13 +73,13 @@ export default function ProductSettingsPage() {
                                     <DropdownMenuTrigger asChild>
                                     <Button aria-haspopup="true" size="icon" variant="ghost">
                                         <MoreHorizontal className="h-4 w-4" />
-                                        <span className="sr-only">Toggle menu</span>
+                                        <span className="sr-only">Alternar menú</span>
                                     </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
-                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                    <DropdownMenuItem>Edit</DropdownMenuItem>
-                                    <DropdownMenuItem>Delete</DropdownMenuItem>
+                                    <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                    <DropdownMenuItem>Editar</DropdownMenuItem>
+                                    <DropdownMenuItem>Eliminar</DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </TableCell>

@@ -86,13 +86,13 @@ export default function CreateOrderPage() {
 
   const handleAddItem = () => {
     if (!currentItem.productId || !currentItem.quantity || !currentItem.color) {
-        toast({ title: "Error", description: "Please select a product, color, and quantity.", variant: "destructive"});
+        toast({ title: "Error", description: "Por favor, selecciona un producto, color y cantidad.", variant: "destructive"});
         return;
     }
 
     const product = products.find(p => p.id === parseInt(currentItem.productId, 10));
     if (!product) {
-        toast({ title: "Error", description: "Product not found.", variant: "destructive"});
+        toast({ title: "Error", description: "Producto no encontrado.", variant: "destructive"});
         return;
     }
     
@@ -126,14 +126,14 @@ export default function CreateOrderPage() {
 
   const handleSaveOrder = () => {
     if(!selectedClient) {
-        toast({ title: "Error", description: "Please select a client.", variant: "destructive"});
+        toast({ title: "Error", description: "Por favor, selecciona un cliente.", variant: "destructive"});
         return;
     }
     if(orderItems.length === 0) {
-        toast({ title: "Error", description: "Please add at least one item to the order.", variant: "destructive"});
+        toast({ title: "Error", description: "Por favor, añade al menos un ítem al pedido.", variant: "destructive"});
         return;
     }
-    toast({ title: "Success!", description: `Order for ${selectedClient.name} created successfully.`});
+    toast({ title: "¡Éxito!", description: `Pedido para ${selectedClient.name} creado con éxito.`});
     // Here you would typically send data to your backend
     console.log({
         client: selectedClient,
@@ -145,28 +145,28 @@ export default function CreateOrderPage() {
   return (
     <>
       <PageHeader
-        title="Create New Order"
-        description="Select a client and add products to create a new sales order."
+        title="Crear Nuevo Pedido"
+        description="Selecciona un cliente y añade productos para crear un nuevo pedido de venta."
       >
         <Button variant="outline" asChild>
             <Link href="/sales/orders">
                 <ChevronLeft className='mr-2' />
-                Back to Orders
+                Volver a Pedidos
             </Link>
         </Button>
       </PageHeader>
       <div className="grid gap-8">
         <Card>
             <CardHeader>
-                <CardTitle>Client Information</CardTitle>
-                <CardDescription>Select the client for this order.</CardDescription>
+                <CardTitle>Información del Cliente</CardTitle>
+                <CardDescription>Selecciona el cliente para este pedido.</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className='max-w-md'>
-                    <Label htmlFor='client-select'>Client</Label>
+                    <Label htmlFor='client-select'>Cliente</Label>
                     <Select onValueChange={(value) => setSelectedClient(clients.find(c => c.id === parseInt(value)) || null)}>
                         <SelectTrigger id="client-select">
-                            <SelectValue placeholder="Select a client" />
+                            <SelectValue placeholder="Selecciona un cliente" />
                         </SelectTrigger>
                         <SelectContent>
                             {clients.map(client => (
@@ -182,20 +182,20 @@ export default function CreateOrderPage() {
 
         <Card>
             <CardHeader>
-                <CardTitle>Order Items</CardTitle>
-                <CardDescription>Add products to the order.</CardDescription>
+                <CardTitle>Ítems del Pedido</CardTitle>
+                <CardDescription>Añade productos al pedido.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-6">
                 <div className="grid md:grid-cols-5 gap-4 items-end">
                     <div className='md:col-span-2'>
-                        <Label htmlFor='product-select'>Product</Label>
+                        <Label htmlFor='product-select'>Producto</Label>
                         <Combobox
                             options={productOptions}
                             value={currentItem.productId}
                             onChange={(value) => setCurrentItem({ ...currentItem, productId: value, color: '' })}
-                            placeholder='Select a product'
-                            searchPlaceholder='Search products...'
-                            noResultsMessage='No products found.'
+                            placeholder='Selecciona un producto'
+                            searchPlaceholder='Buscar productos...'
+                            noResultsMessage='No se encontraron productos.'
                          />
                     </div>
                      <div>
@@ -204,31 +204,31 @@ export default function CreateOrderPage() {
                             options={colorOptions}
                             value={currentItem.color}
                             onChange={(value) => setCurrentItem({ ...currentItem, color: value })}
-                            placeholder='Select a color'
-                            searchPlaceholder='Search colors...'
-                            noResultsMessage='No colors found.'
+                            placeholder='Selecciona un color'
+                            searchPlaceholder='Buscar colores...'
+                            noResultsMessage='No se encontraron colores.'
                             disabled={!selectedProduct}
                         />
                      </div>
                     <div>
-                        <Label htmlFor='quantity-input'>Quantity</Label>
+                        <Label htmlFor='quantity-input'>Cantidad</Label>
                         <Input id='quantity-input' type="number" min="1" value={currentItem.quantity} onChange={e => setCurrentItem({...currentItem, quantity: e.target.value})} />
                     </div>
                     <Button onClick={handleAddItem} className="self-end">
                         <PlusCircle className="mr-2"/>
-                        Add Item
+                        Añadir Ítem
                     </Button>
                 </div>
                 <div className="border rounded-md">
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Product</TableHead>
+                                <TableHead>Producto</TableHead>
                                 <TableHead>Color</TableHead>
-                                <TableHead className="text-center">Quantity</TableHead>
-                                <TableHead className="text-right">Unit Price</TableHead>
+                                <TableHead className="text-center">Cantidad</TableHead>
+                                <TableHead className="text-right">Precio Unit.</TableHead>
                                 <TableHead className="text-right">Total</TableHead>
-                                <TableHead className="w-[50px]"><span className='sr-only'>Remove</span></TableHead>
+                                <TableHead className="w-[50px]"><span className='sr-only'>Eliminar</span></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -247,7 +247,7 @@ export default function CreateOrderPage() {
                                 </TableRow>
                             )) : (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="text-center h-24">No items added yet.</TableCell>
+                                    <TableCell colSpan={6} className="text-center h-24">Aún no se han añadido ítems.</TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
@@ -256,11 +256,11 @@ export default function CreateOrderPage() {
             </CardContent>
             <CardFooter className="flex flex-col items-end gap-4">
                 <div className="text-2xl font-bold">
-                    Order Total: ${orderTotal.toLocaleString()}
+                    Total del Pedido: ${orderTotal.toLocaleString()}
                 </div>
                 <div className='flex gap-2'>
-                    <Button variant="outline" asChild><Link href="/sales/orders">Cancel</Link></Button>
-                    <Button onClick={handleSaveOrder}>Save Order</Button>
+                    <Button variant="outline" asChild><Link href="/sales/orders">Cancelar</Link></Button>
+                    <Button onClick={handleSaveOrder}>Guardar Pedido</Button>
                 </div>
             </CardFooter>
         </Card>

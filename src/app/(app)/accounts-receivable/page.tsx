@@ -39,26 +39,26 @@ export default function AccountsReceivablePage() {
   return (
     <>
       <PageHeader
-        title="Accounts Receivable"
-        description="Manage client accounts and track pending payments."
+        title="Cuentas por Cobrar"
+        description="Gestiona las cuentas de clientes y realiza el seguimiento de los pagos pendientes."
       >
-        <Button>Apply Payment</Button>
+        <Button>Aplicar Pago</Button>
       </PageHeader>
       <Card>
         <CardHeader>
-          <CardTitle>Clients</CardTitle>
-          <CardDescription>A list of all clients with pending balances.</CardDescription>
+          <CardTitle>Clientes</CardTitle>
+          <CardDescription>Un listado de todos los clientes con saldos pendientes.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Client</TableHead>
+                <TableHead>Cliente</TableHead>
                 <TableHead>CUIT</TableHead>
-                <TableHead className="hidden md:table-cell">Phone</TableHead>
-                <TableHead className="text-right">Pending Balance</TableHead>
+                <TableHead className="hidden md:table-cell">Teléfono</TableHead>
+                <TableHead className="text-right">Saldo Pendiente</TableHead>
                 <TableHead>
-                    <span className="sr-only">Actions</span>
+                    <span className="sr-only">Acciones</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -74,15 +74,15 @@ export default function AccountsReceivablePage() {
                     <DropdownMenuTrigger asChild>
                       <Button aria-haspopup="true" size="icon" variant="ghost">
                         <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Toggle menu</span>
+                        <span className="sr-only">Alternar menú</span>
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                       <DropdownMenuItem asChild>
-                        <Link href={`/accounts-receivable/${client.id}`}>View Details</Link>
+                        <Link href={`/accounts-receivable/${client.id}`}>Ver Detalles</Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem>Apply Payment</DropdownMenuItem>
+                      <DropdownMenuItem>Aplicar Pago</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                   </TableCell>

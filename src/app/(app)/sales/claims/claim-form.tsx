@@ -35,8 +35,8 @@ import { Loader2, Wand2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const claimFormSchema = z.object({
-  orderDetailId: z.string().min(1, 'Please select an order item.'),
-  claimDetails: z.string().min(10, 'Please provide at least 10 characters.'),
+  orderDetailId: z.string().min(1, 'Por favor, selecciona un ítem de pedido.'),
+  claimDetails: z.string().min(10, 'Por favor, proporciona al menos 10 caracteres.'),
 });
 
 type ClaimFormValues = z.infer<typeof claimFormSchema>;
@@ -67,7 +67,7 @@ export function ClaimForm({ allOrderDetails }: ClaimFormProps) {
     if (!selectedOrderDetail) {
       toast({
         title: 'Error',
-        description: 'Could not find the selected order detail.',
+        description: 'No se pudo encontrar el detalle del pedido seleccionado.',
         variant: 'destructive',
       });
       return;
@@ -76,7 +76,7 @@ export function ClaimForm({ allOrderDetails }: ClaimFormProps) {
     startTransition(async () => {
       const result = await handleGenerateClaimMessage({
         orderDetailId: selectedOrderDetail.id,
-        clientName: allOrderDetails.find(od => od.clientId === selectedOrderDetail.clientId)?.productName || 'Valued Customer',
+        clientName: allOrderDetails.find(od => od.clientId === selectedOrderDetail.clientId)?.productName || 'Cliente Valorado',
         productName: selectedOrderDetail.productName,
         quantity: selectedOrderDetail.quantity,
         status: selectedOrderDetail.status,
@@ -86,8 +86,8 @@ export function ClaimForm({ allOrderDetails }: ClaimFormProps) {
       if (result.success && result.message) {
         setGeneratedMessage(result.message);
         toast({
-          title: 'Success',
-          description: 'Claim message generated successfully.',
+          title: 'Éxito',
+          description: 'Mensaje de reclamo generado con éxito.',
         });
       } else {
         toast({
@@ -104,9 +104,9 @@ export function ClaimForm({ allOrderDetails }: ClaimFormProps) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardHeader>
-            <CardTitle>Generate Claim Message</CardTitle>
+            <CardTitle>Generar Mensaje de Reclamo</CardTitle>
             <CardDescription>
-              Use AI to generate a professional response to a customer claim.
+              Usa IA para generar una respuesta profesional a un reclamo de cliente.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
@@ -115,14 +115,14 @@ export function ClaimForm({ allOrderDetails }: ClaimFormProps) {
               name="orderDetailId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Order Item</FormLabel>
+                  <FormLabel>Ítem del Pedido</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select an order item" />
+                        <SelectValue placeholder="Selecciona un ítem de pedido" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -145,10 +145,10 @@ export function ClaimForm({ allOrderDetails }: ClaimFormProps) {
               name="claimDetails"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Claim Details</FormLabel>
+                  <FormLabel>Detalles del Reclamo</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="e.g., The customer reports the paint color is a shade lighter than ordered..."
+                      placeholder="Ej: El cliente informa que el color de la pintura es un tono más claro de lo pedido..."
                       {...field}
                     />
                   </FormControl>
@@ -158,7 +158,7 @@ export function ClaimForm({ allOrderDetails }: ClaimFormProps) {
             />
             {generatedMessage && (
                 <FormItem>
-                    <FormLabel>Generated Message</FormLabel>
+                    <FormLabel>Mensaje Generado</FormLabel>
                     <Textarea readOnly value={generatedMessage} rows={5} className="bg-muted/50" />
                 </FormItem>
             )}
@@ -170,7 +170,7 @@ export function ClaimForm({ allOrderDetails }: ClaimFormProps) {
               ) : (
                 <Wand2 className="mr-2 h-4 w-4" />
               )}
-              Generate Message
+              Generar Mensaje
             </Button>
           </CardFooter>
         </form>

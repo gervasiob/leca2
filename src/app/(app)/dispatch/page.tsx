@@ -46,10 +46,14 @@ export default function DispatchPage() {
     const completed: Order[] = [];
     const partial: Order[] = [];
 
-    orders.forEach((order) => {
+    const processedOrders = orders.map(order => {
+        const orderDate = orderDetails.find(d => d.orderId === order.id)?.productionDate || order.orderDate;
+        return { ...order, orderDate };
+    });
+
+    processedOrders.forEach((order) => {
       const status = getOrderProductionStatus(order.id);
       if (status === 'completed') {
-        // Only include orders that haven't been fully dispatched
         const details = orderDetails.filter(od => od.orderId === order.id);
         if(details.some(d => d.status === 'produced')) {
           completed.push(order);

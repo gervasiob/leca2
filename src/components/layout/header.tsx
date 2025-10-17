@@ -37,13 +37,13 @@ import {
 } from '../ui/accordion';
 
 const navLinks = [
-  { href: '/dashboard', icon: Home, label: 'Dashboard' },
-  { href: '/accounts-receivable', icon: Users, label: 'Accounts Receivable' },
-  { href: '/sales/orders', icon: ShoppingCart, label: 'Sales' },
-  { href: '/production/batches', icon: Factory, label: 'Production' },
-  { href: '/dispatch', icon: FileText, label: 'Dispatch' },
-  { href: '/price-lists', icon: ClipboardList, label: 'Price Lists' },
-  { href: '/sales/claims', icon: MessageSquareWarning, label: 'Claims' },
+  { href: '/dashboard', icon: Home, label: 'Tablero' },
+  { href: '/accounts-receivable', icon: Users, label: 'Cuentas por Cobrar' },
+  { href: '/sales/orders', icon: ShoppingCart, label: 'Ventas' },
+  { href: '/production/batches', icon: Factory, label: 'Producción' },
+  { href: '/dispatch', icon: FileText, label: 'Remitos' },
+  { href: '/price-lists', icon: ClipboardList, label: 'Listas de Precios' },
+  { href: '/sales/claims', icon: MessageSquareWarning, label: 'Reclamos' },
 ];
 
 const settingsLinks = [
@@ -61,14 +61,14 @@ export function Header() {
           className="flex items-center gap-2 text-lg font-semibold md:text-base"
         >
           <PaintBucketIcon className="h-6 w-6 text-primary" />
-          <span className="sr-only">Paint Factory</span>
+          <span className="sr-only">Fábrica de Pintura</span>
         </Link>
       </nav>
       <Sheet>
         <SheetTrigger asChild>
           <Button variant="outline" size="icon" className="shrink-0 md:hidden">
             <Menu className="h-5 w-5" />
-            <span className="sr-only">Toggle navigation menu</span>
+            <span className="sr-only">Alternar menú de navegación</span>
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="flex flex-col">
@@ -78,7 +78,7 @@ export function Header() {
               className="flex items-center gap-2 text-lg font-semibold mb-4"
             >
               <PaintBucketIcon className="h-6 w-6 text-primary" />
-              <span>Paint Factory</span>
+              <span>Fábrica de Pintura</span>
             </Link>
             {navLinks.map(({ href, icon: Icon, label }) => (
               <Link
@@ -100,7 +100,7 @@ export function Header() {
               <AccordionItem value="settings" className="border-b-0">
                 <AccordionTrigger className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground hover:text-primary hover:no-underline">
                    <Settings className="h-5 w-5" />
-                   <span>Settings</span>
+                   <span>Configuración</span>
                 </AccordionTrigger>
                 <AccordionContent className="pl-8">
                   <nav className="grid gap-2">
@@ -133,16 +133,16 @@ export function Header() {
                 <AvatarImage src="https://picsum.photos/seed/user/32/32" />
                 <AvatarFallback>AD</AvatarFallback>
               </Avatar>
-              <span className="sr-only">Toggle user menu</span>
+              <span className="sr-only">Alternar menú de usuario</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuItem>Support</DropdownMenuItem>
+            <DropdownMenuItem>Configuración</DropdownMenuItem>
+            <DropdownMenuItem>Soporte</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Logout</DropdownMenuItem>
+            <DropdownMenuItem>Cerrar Sesión</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

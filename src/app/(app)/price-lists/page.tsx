@@ -37,27 +37,27 @@ export default function PriceListsPage() {
   return (
     <>
       <PageHeader
-        title="Price Lists"
-        description="Manage product prices and client discounts."
+        title="Listas de Precios"
+        description="Gestiona los precios de los productos y los descuentos de los clientes."
       >
-        <Button>Bulk Update</Button>
+        <Button>Actualización Masiva</Button>
       </PageHeader>
       <Card>
         <CardHeader>
-          <CardTitle>Master Price List</CardTitle>
-          <CardDescription>This list contains the base price for all products.</CardDescription>
+          <CardTitle>Lista de Precios Maestra</CardTitle>
+          <CardDescription>Esta lista contiene el precio base para todos los productos.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Product ID</TableHead>
-                <TableHead>Product Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Application</TableHead>
-                <TableHead className="text-right">Unit Price</TableHead>
+                <TableHead>ID Producto</TableHead>
+                <TableHead>Nombre del Producto</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Aplicación</TableHead>
+                <TableHead className="text-right">Precio Unitario</TableHead>
                 <TableHead>
-                    <span className="sr-only">Actions</span>
+                    <span className="sr-only">Acciones</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -74,13 +74,13 @@ export default function PriceListsPage() {
                     <DropdownMenuTrigger asChild>
                       <Button aria-haspopup="true" size="icon" variant="ghost">
                         <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Toggle menu</span>
+                        <span className="sr-only">Alternar menú</span>
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem>Edit Price</DropdownMenuItem>
-                      <DropdownMenuItem>View Price History</DropdownMenuItem>
+                      <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                      <DropdownMenuItem>Editar Precio</DropdownMenuItem>
+                      <DropdownMenuItem>Ver Historial de Precios</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                   </TableCell>

@@ -159,24 +159,24 @@ export default function CreateBatchPage() {
   return (
     <>
       <PageHeader
-        title="Create Production Batch"
-        description="Select pending orders to include in a new production batch."
+        title="Crear Lote de Producción"
+        description="Selecciona pedidos pendientes para incluir en un nuevo lote de producción."
       >
         <Button variant="outline" asChild>
             <Link href="/production/batches">
                 <ChevronLeft className='mr-2' />
-                Back to Batches
+                Volver a Lotes
             </Link>
         </Button>
       </PageHeader>
       <Card>
         <CardHeader>
-          <CardTitle>Select Pending Orders</CardTitle>
+          <CardTitle>Seleccionar Pedidos Pendientes</CardTitle>
           <CardDescription>
-            Filter and select the items to be produced.
+            Filtra y selecciona los ítems a producir.
           </CardDescription>
           <Input
-            placeholder="Filter by product or client..."
+            placeholder="Filtrar por producto o cliente..."
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             className="max-w-sm mt-2"
@@ -191,15 +191,15 @@ export default function CreateBatchPage() {
                     <Checkbox
                         checked={selectedItems.size > 0 && selectedItems.size === filteredAndSortedOrders.length}
                         onCheckedChange={toggleSelectAll}
-                        aria-label="Select all"
+                        aria-label="Seleccionar todo"
                     />
                   </TableHead>
-                  <SortableHeader sortKey="orderId">Order</SortableHeader>
-                  <SortableHeader sortKey="clientName">Client</SortableHeader>
-                  <SortableHeader sortKey="productName">Product</SortableHeader>
+                  <SortableHeader sortKey="orderId">Pedido</SortableHeader>
+                  <SortableHeader sortKey="clientName">Cliente</SortableHeader>
+                  <SortableHeader sortKey="productName">Producto</SortableHeader>
                   <SortableHeader sortKey="color">Color</SortableHeader>
-                  <SortableHeader sortKey="quantity">Qty</SortableHeader>
-                  <SortableHeader sortKey="productionDate">Date</SortableHeader>
+                  <SortableHeader sortKey="quantity">Cant.</SortableHeader>
+                  <SortableHeader sortKey="productionDate">Fecha</SortableHeader>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -212,7 +212,7 @@ export default function CreateBatchPage() {
                         <Checkbox
                             checked={selectedItems.has(detail.id)}
                             onCheckedChange={() => toggleSelectItem(detail.id)}
-                            aria-label="Select row"
+                            aria-label="Seleccionar fila"
                         />
                     </TableCell>
                     <TableCell className="font-medium">
@@ -230,7 +230,7 @@ export default function CreateBatchPage() {
                  {filteredAndSortedOrders.length === 0 && (
                     <TableRow>
                         <TableCell colSpan={7} className="text-center h-24">
-                            No matching pending orders found.
+                            No se encontraron pedidos pendientes que coincidan.
                         </TableCell>
                     </TableRow>
                  )}
@@ -240,17 +240,17 @@ export default function CreateBatchPage() {
         </CardContent>
         <CardFooter className="flex-col items-start gap-4">
             <div className="w-full">
-                <h3 className="text-lg font-semibold">Batch Summary</h3>
-                <p className="text-sm text-muted-foreground">This is what will be included in the new batch.</p>
+                <h3 className="text-lg font-semibold">Resumen del Lote</h3>
+                <p className="text-sm text-muted-foreground">Esto es lo que se incluirá en el nuevo lote.</p>
             </div>
           {footerSummary.length > 0 ? (
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Product</TableHead>
+                        <TableHead>Producto</TableHead>
                         <TableHead>Color</TableHead>
-                        <TableHead className="text-right">Total Quantity</TableHead>
-                        <TableHead className="text-right"># of Orders</TableHead>
+                        <TableHead className="text-right">Cantidad Total</TableHead>
+                        <TableHead className="text-right"># de Pedidos</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -266,12 +266,12 @@ export default function CreateBatchPage() {
             </Table>
           ) : (
             <div className="text-center text-muted-foreground w-full py-4">
-              Select items from the table above to add them to the batch.
+              Selecciona ítems de la tabla de arriba para agregarlos al lote.
             </div>
           )}
           <div className="w-full flex justify-end">
             <Button disabled={selectedOrderDetails.length === 0}>
-                Create Batch ({selectedOrderDetails.length} items)
+                Crear Lote ({selectedOrderDetails.length} ítems)
             </Button>
           </div>
         </CardFooter>

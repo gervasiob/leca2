@@ -24,26 +24,26 @@ export default function ClaimsPage() {
     <div className="grid flex-1 items-start gap-4 lg:grid-cols-3 lg:gap-8">
       <div className="grid auto-rows-max items-start gap-4 lg:col-span-2 lg:gap-8">
         <PageHeader
-          title="Claims Management"
-          description="Handle client claims and generate responses."
+          title="Gestión de Reclamos"
+          description="Maneja los reclamos de los clientes y genera respuestas."
         />
         <Card>
           <CardHeader>
-            <CardTitle>Open Claims</CardTitle>
+            <CardTitle>Reclamos Abiertos</CardTitle>
             <CardDescription>
-              A list of all unresolved claims.
+              Una lista de todos los reclamos sin resolver.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Claim ID</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Order Item</TableHead>
-                  <TableHead>Reason</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead>ID Reclamo</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Ítem del Pedido</TableHead>
+                  <TableHead>Motivo</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Fecha</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -57,7 +57,7 @@ export default function ClaimsPage() {
                     <TableCell>{claim.reason}</TableCell>
                     <TableCell>
                       <Badge variant={claim.status === 'open' ? 'destructive' : 'default'}>
-                        {claim.status}
+                        {claim.status === 'open' ? 'Abierto' : claim.status}
                       </Badge>
                     </TableCell>
                     <TableCell>{format(claim.createdAt, 'dd/MM/yyyy')}</TableCell>

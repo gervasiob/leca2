@@ -64,32 +64,32 @@ export default function ProductionBatchesPage() {
   return (
     <>
       <PageHeader
-        title="Production Planning"
-        description="View pending orders and group them for new batches."
+        title="Planificación de Producción"
+        description="Visualiza pedidos pendientes y agrúpalos para nuevos lotes."
       >
         <Button asChild>
-          <Link href="/production/batches/create">Create Batch</Link>
+          <Link href="/production/batches/create">Crear Lote</Link>
         </Button>
     </PageHeader>
 
       <div className="grid gap-4 lg:grid-cols-2 lg:gap-8">
         <Card>
           <CardHeader>
-            <CardTitle>Pending Order Details</CardTitle>
+            <CardTitle>Detalles de Pedidos Pendientes</CardTitle>
             <CardDescription>
-              All individual order items waiting for production.
+              Todos los ítems de pedidos individuales esperando producción.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Order</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Product</TableHead>
+                  <TableHead>Pedido</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Producto</TableHead>
                   <TableHead>Color</TableHead>
-                  <TableHead className="text-center">Qty</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead className="text-center">Cant.</TableHead>
+                  <TableHead>Fecha</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -116,7 +116,7 @@ export default function ProductionBatchesPage() {
                 {pendingOrders.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center">
-                      No pending orders.
+                      No hay pedidos pendientes.
                     </TableCell>
                   </TableRow>
                 )}
@@ -126,19 +126,19 @@ export default function ProductionBatchesPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Pending by Product & Color</CardTitle>
+            <CardTitle>Pendientes por Producto y Color</CardTitle>
             <CardDescription>
-              Total quantities of pending products grouped together.
+              Cantidades totales de productos pendientes agrupados.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product</TableHead>
+                  <TableHead>Producto</TableHead>
                   <TableHead>Color</TableHead>
-                  <TableHead className="text-center">Total Quantity</TableHead>
-                  <TableHead className="text-center"># Orders</TableHead>
+                  <TableHead className="text-center">Cantidad Total</TableHead>
+                  <TableHead className="text-center"># Pedidos</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -161,7 +161,7 @@ export default function ProductionBatchesPage() {
                 {groupedPendingOrders.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center">
-                      No pending orders.
+                      No hay pedidos pendientes.
                     </TableCell>
                   </TableRow>
                 )}
@@ -173,9 +173,9 @@ export default function ProductionBatchesPage() {
 
       <Card className="mt-8">
         <CardHeader>
-            <CardTitle>Production Batches</CardTitle>
+            <CardTitle>Lotes de Producción</CardTitle>
             <CardDescription>
-                Current and past production batches.
+                Lotes de producción actuales y pasados.
             </CardDescription>
         </CardHeader>
         <CardContent>
@@ -183,12 +183,12 @@ export default function ProductionBatchesPage() {
         <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Batch #</TableHead>
-                  <TableHead>Items</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Production Date</TableHead>
+                  <TableHead>Lote #</TableHead>
+                  <TableHead>Ítems</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Fecha de Producción</TableHead>
                    <TableHead>
-                    <span className="sr-only">Actions</span>
+                    <span className="sr-only">Acciones</span>
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -207,7 +207,7 @@ export default function ProductionBatchesPage() {
                        <Button variant="ghost" size="icon" asChild>
                           <Link href={`/production/batches/${batch.id}`}>
                             <ChevronRight className="h-4 w-4" />
-                            <span className="sr-only">View Details</span>
+                            <span className="sr-only">Ver Detalles</span>
                           </Link>
                         </Button>
                     </TableCell>
@@ -216,7 +216,7 @@ export default function ProductionBatchesPage() {
                 {productionBatches.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center">
-                      No production batches found.
+                      No se encontraron lotes de producción.
                     </TableCell>
                   </TableRow>
                 )}

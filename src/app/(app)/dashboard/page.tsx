@@ -76,8 +76,8 @@ export default function Dashboard() {
   return (
     <div className="flex flex-col w-full">
       <PageHeader
-        title="Dashboard"
-        description="An overview of your factory's performance."
+        title="Tablero"
+        description="Un resumen del rendimiento de tu fábrica."
       >
         <Popover>
           <PopoverTrigger asChild>
@@ -100,7 +100,7 @@ export default function Dashboard() {
                   format(date.from, 'LLL dd, y')
                 )
               ) : (
-                <span>Pick a date</span>
+                <span>Elige una fecha</span>
               )}
             </Button>
           </PopoverTrigger>
@@ -119,7 +119,7 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium">Ingresos Totales</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -127,13 +127,13 @@ export default function Dashboard() {
               ${totalRevenue.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              Selected period revenue
+              Ingresos del período seleccionado
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium">Ingresos Pendientes</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -141,25 +141,25 @@ export default function Dashboard() {
                 ${pendingRevenue.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              Total amount pending collection.
+              Monto total pendiente de cobro.
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Clients with Debt</CardTitle>
+            <CardTitle className="text-sm font-medium">Clientes con Deuda</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">+{clientsWithPendingBalance}</div>
             <p className="text-xs text-muted-foreground">
-              Clients with pending balances.
+              Clientes con saldos pendientes.
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Production</CardTitle>
+            <CardTitle className="text-sm font-medium">Producción Pendiente</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -167,13 +167,13 @@ export default function Dashboard() {
                 ${pendingToProduceAmount.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              Value of items pending production.
+              Valor de ítems pendientes de producción.
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Open Claims</CardTitle>
+            <CardTitle className="text-sm font-medium">Reclamos Abiertos</CardTitle>
             <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -181,7 +181,7 @@ export default function Dashboard() {
               {claims.filter((c) => c.status === 'open').length}
             </div>
             <p className="text-xs text-muted-foreground">
-              Immediate attention required
+              Requieren atención inmediata
             </p>
           </CardContent>
         </Card>
@@ -189,7 +189,7 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7 mt-4">
         <Card className="lg:col-span-4">
           <CardHeader>
-            <CardTitle>Sales Overview</CardTitle>
+            <CardTitle>Resumen de Ventas</CardTitle>
           </CardHeader>
           <CardContent className="pl-2">
             <SalesChart />
@@ -197,9 +197,9 @@ export default function Dashboard() {
         </Card>
         <Card className="lg:col-span-3">
           <CardHeader>
-            <CardTitle>Order Status</CardTitle>
+            <CardTitle>Estado de Pedidos</CardTitle>
             <CardDescription>
-              Distribution of current order statuses.
+              Distribución de los estados actuales de los pedidos.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -209,19 +209,19 @@ export default function Dashboard() {
       </div>
       <Card className="mt-4">
         <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
+          <CardTitle>Actividad Reciente</CardTitle>
           <CardDescription>
-            A log of the most recent order updates.
+            Un registro de las actualizaciones de pedidos más recientes.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Order ID</TableHead>
-                <TableHead>Product</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>
+                <TableHead>Pedido ID</TableHead>
+                <TableHead>Producto</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead>Fecha</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

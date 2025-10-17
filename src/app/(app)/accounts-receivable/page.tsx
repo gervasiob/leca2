@@ -103,7 +103,7 @@ export default function AccountsReceivablePage() {
                     {client.phone}
                   </TableCell>
                   <TableCell className="text-right">
-                    ${getClientBalance(client.id).toLocaleString()}
+                    ${getClientBalance(client.id).toLocaleString('es-AR')}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>

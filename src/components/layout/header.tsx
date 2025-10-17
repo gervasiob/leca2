@@ -13,9 +13,7 @@ import { Button } from '@/components/ui/button';
 import {
   Home,
   Menu,
-  Package2,
   Users,
-  LineChart,
   ShoppingCart,
   Factory,
   ClipboardList,
@@ -25,9 +23,10 @@ import {
   List,
   FileText,
   UserCog,
+  LogOut,
 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { PaintBucketIcon } from '../icons';
 import {
@@ -55,6 +54,12 @@ const settingsLinks = [
 
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    router.push('/login');
+  }
+
   return (
     <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-30">
       <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
@@ -144,7 +149,10 @@ export function Header() {
             <DropdownMenuItem>Configuración</DropdownMenuItem>
             <DropdownMenuItem>Soporte</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Cerrar Sesión</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Cerrar Sesión</span>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

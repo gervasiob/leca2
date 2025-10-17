@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
@@ -72,6 +72,11 @@ export default function SalesOrdersPage() {
     key: SortKey;
     direction: SortDirection;
   } | null>({ key: 'orderId', direction: 'desc' });
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
   
   const filteredAndSortedDetails = useMemo(() => {
     let filtered = orderDetails.filter((item) => {
@@ -236,7 +241,7 @@ export default function SalesOrdersPage() {
                   <TableCell>
                     <Badge variant={statusVariantMap[detail.status] || 'default'}>{statusTranslations[detail.status]}</Badge>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell">{orderDate ? format(orderDate, 'dd/MM/yyyy') : 'N/A'}</TableCell>
+                  <TableCell className="hidden md:table-cell">{isClient && orderDate ? format(orderDate, 'dd/MM/yyyy') : 'N/A'}</TableCell>
                   <TableCell className="text-right">${detail.totalPrice.toLocaleString('es-AR')}</TableCell>
                   <TableCell>
                   <DropdownMenu>

@@ -22,7 +22,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { orderDetails, orders, clients } from '@/lib/data';
 import type { OrderDetail, OrderDetailStatus } from '@/lib/types';
-import { MoreHorizontal, ArrowUpDown } from 'lucide-react';
+import { MoreHorizontal, ArrowUpDown, Download } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -32,6 +32,7 @@ import {
   } from "@/components/ui/dropdown-menu"
 import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
+import Papa from 'papaparse';
 
 
 type SortKey = keyof OrderDetail | 'clientName' | 'orderDate' | 'totalPrice';
@@ -148,6 +149,30 @@ export default function SalesOrdersPage() {
     </TableHead>
   );
 
+  const handleDownloadCSV = () => {
+    const dataToExport = filteredAndSortedDetails.map((detail) => ({
+      'ID Pedido': `${detail.orderId}-${detail.id}`,
+      'Cliente': getClientName(detail.clientId),
+      'Producto': detail.productName,
+      'Color': detail.color,
+      'Cantidad': detail.quantity,
+      'Estado': statusTranslations[detail.status],
+      'Fecha': format(getOrderDate(detail.orderId), 'dd/MM/yyyy'),
+      'Total': detail.totalPrice,
+    }));
+
+    const csv = Papa.unparse(dataToExport);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'detalle_pedidos.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
 
   return (
     <>
@@ -155,6 +180,10 @@ export default function SalesOrdersPage() {
         title="Ventas y Pedidos"
         description="Gestiona todos los detalles de los pedidos, desde la creación hasta la entrega."
       >
+        <Button variant="outline" onClick={handleDownloadCSV}>
+          <Download className="mr-2" />
+          Descargar CSV
+        </Button>
         <Button asChild>
           <Link href="/sales/orders/create">Crear Nuevo Pedido</Link>
         </Button>

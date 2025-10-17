@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,8 +18,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
 import { products, orderDetails } from '@/lib/data';
-import { MoreHorizontal, Upload, Download, FileUp } from 'lucide-react';
+import { MoreHorizontal, Upload, Download, FileUp, Percent, DollarSign, X } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,6 +62,12 @@ export default function PriceListsPage() {
   const [file, setFile] = useState<File | null>(null);
   const [previewData, setPreviewData] = useState<PriceUpdatePreview[]>([]);
   const [prices, setPrices] = useState<Record<number, number>>({});
+  
+  const [filter, setFilter] = useState('');
+  const [selectedProducts, setSelectedProducts] = useState<Set<number>>(new Set());
+  const [percentUpdate, setPercentUpdate] = useState('');
+  const [valueUpdate, setValueUpdate] = useState('');
+
 
   useEffect(() => {
     const initialPrices: Record<number, number> = {};
@@ -69,6 +76,65 @@ export default function PriceListsPage() {
     });
     setPrices(initialPrices);
   }, []);
+  
+  const filteredProducts = useMemo(() => {
+    return products.filter(p => 
+        p.name.toLowerCase().includes(filter.toLowerCase()) ||
+        p.type.toLowerCase().includes(filter.toLowerCase()) ||
+        p.application.toLowerCase().includes(filter.toLowerCase())
+    );
+  }, [filter]);
+
+  const handleSelectProduct = (productId: number, checked: boolean) => {
+    setSelectedProducts(prev => {
+        const newSet = new Set(prev);
+        if(checked) {
+            newSet.add(productId);
+        } else {
+            newSet.delete(productId);
+        }
+        return newSet;
+    });
+  }
+  
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+        setSelectedProducts(new Set(filteredProducts.map(p => p.id)));
+    } else {
+        setSelectedProducts(new Set());
+    }
+  }
+  
+  const handleBulkUpdate = (type: 'percent' | 'value') => {
+    const newPrices = {...prices};
+    let updatedCount = 0;
+
+    selectedProducts.forEach(productId => {
+        const currentPrice = newPrices[productId] || 0;
+        if(type === 'percent') {
+            const percent = parseFloat(percentUpdate);
+            if(!isNaN(percent)) {
+                newPrices[productId] = currentPrice * (1 + percent / 100);
+                updatedCount++;
+            }
+        } else {
+            const value = parseFloat(valueUpdate);
+            if(!isNaN(value)) {
+                newPrices[productId] = currentPrice + value;
+                updatedCount++;
+            }
+        }
+    });
+
+    setPrices(newPrices);
+    toast({
+        title: "Precios Actualizados",
+        description: `${updatedCount} productos seleccionados han sido actualizados.`
+    });
+    setSelectedProducts(new Set());
+    setPercentUpdate('');
+    setValueUpdate('');
+  }
 
   const handleDownloadTemplate = () => {
     const templateData = products.map(p => ({
@@ -141,7 +207,6 @@ export default function PriceListsPage() {
   }
 
   const handleApplyUpdate = () => {
-    // Here you would implement the actual price update logic
     console.log("Applying updates:", previewData);
     const newPrices = { ...prices };
     previewData.forEach(item => {
@@ -167,7 +232,7 @@ export default function PriceListsPage() {
           <DialogTrigger asChild>
             <Button>
               <Upload className="mr-2" />
-              Actualización Masiva
+              Actualización Masiva CSV
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-3xl">
@@ -252,17 +317,70 @@ export default function PriceListsPage() {
           </DialogContent>
         </Dialog>
       </PageHeader>
+
+      {selectedProducts.size > 0 && (
+        <Card className="mb-8 bg-muted/40 border-dashed">
+            <CardHeader>
+                <CardTitle className='text-lg'>Actualización Rápida</CardTitle>
+                <CardDescription>
+                    Aplicar un cambio de precio a los {selectedProducts.size} productos seleccionados.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col sm:flex-row gap-4 items-center">
+                <div className='flex-1 w-full sm:w-auto'>
+                    <Label htmlFor="percent-update">Aumentar por Porcentaje</Label>
+                    <div className='relative'>
+                        <Percent className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
+                        <Input id="percent-update" type="number" placeholder='Ej: 15' className='pl-8' value={percentUpdate} onChange={e => setPercentUpdate(e.target.value)} />
+                    </div>
+                </div>
+                <Button onClick={() => handleBulkUpdate('percent')} disabled={!percentUpdate}>Aplicar %</Button>
+
+                <div className='flex-1 w-full sm:w-auto'>
+                    <Label htmlFor="value-update">Aumentar por Valor Fijo</Label>
+                     <div className='relative'>
+                        <DollarSign className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
+                        <Input id="value-update" type="number" placeholder='Ej: 500' className='pl-8' value={valueUpdate} onChange={e => setValueUpdate(e.target.value)} />
+                    </div>
+                </div>
+                <Button onClick={() => handleBulkUpdate('value')} disabled={!valueUpdate}>Aplicar $</Button>
+                
+                <div className='border-l h-10 mx-4 hidden sm:block' />
+
+                <Button variant="ghost" size="icon" className='self-end' onClick={() => setSelectedProducts(new Set())}>
+                    <X className="h-4 w-4" />
+                    <span className='sr-only'>Deseleccionar todo</span>
+                </Button>
+
+            </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Lista de Precios Maestra</CardTitle>
           <CardDescription>
             Esta lista contiene el precio base para todos los productos.
           </CardDescription>
+          <div className='pt-4'>
+            <Input 
+                placeholder="Filtrar por nombre, tipo o aplicación..."
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                className="max-w-sm"
+            />
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className='w-[50px]'>
+                    <Checkbox 
+                        checked={selectedProducts.size > 0 && selectedProducts.size === filteredProducts.length}
+                        onCheckedChange={(checked) => handleSelectAll(!!checked)}
+                    />
+                </TableHead>
                 <TableHead>ID Producto</TableHead>
                 <TableHead>Nombre del Producto</TableHead>
                 <TableHead>Tipo</TableHead>
@@ -274,8 +392,14 @@ export default function PriceListsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {products.map((product) => (
-                <TableRow key={product.id}>
+              {filteredProducts.map((product) => (
+                <TableRow key={product.id} data-state={selectedProducts.has(product.id) && "selected"}>
+                  <TableCell>
+                      <Checkbox 
+                        checked={selectedProducts.has(product.id)}
+                        onCheckedChange={(checked) => handleSelectProduct(product.id, !!checked)}
+                      />
+                  </TableCell>
                   <TableCell className="font-medium">#{product.id}</TableCell>
                   <TableCell>{product.name}</TableCell>
                   <TableCell className="hidden md:table-cell">
@@ -308,6 +432,11 @@ export default function PriceListsPage() {
                   </TableCell>
                 </TableRow>
               ))}
+              {filteredProducts.length === 0 && (
+                <TableRow>
+                    <TableCell colSpan={7} className="text-center h-24">No se encontraron productos.</TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

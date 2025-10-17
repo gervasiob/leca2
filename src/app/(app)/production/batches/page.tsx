@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { PageHeader } from '@/components/page-header';
 import {
   Card,
@@ -17,7 +18,6 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { orderDetails, clients, productionBatches } from '@/lib/data';
 import { format } from 'date-fns';
-import type { OrderDetail } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 
 const getClientName = (clientId: number) => {
@@ -63,7 +63,9 @@ export default function ProductionBatchesPage() {
         title="Production Planning"
         description="View pending orders and group them for new batches."
       >
-        <Button>Create Batch</Button>
+        <Button asChild>
+          <Link href="/production/batches/create">Create Batch</Link>
+        </Button>
     </PageHeader>
 
       <div className="grid gap-4 lg:grid-cols-2 lg:gap-8">

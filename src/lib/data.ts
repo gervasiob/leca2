@@ -1,4 +1,4 @@
-import type { Client, Order, OrderDetail, ProductionBatch, Product, Claim, User } from './types';
+import type { Client, Order, OrderDetail, ProductionBatch, Product, Claim, User, Role } from './types';
 
 export const clients: Client[] = [
   { id: 1, name: 'Constructora del Norte S.A.', cuit: '30-12345678-9', address: 'Av. Siempre Viva 742', phone: '11-2345-6789', email: 'compras@constructora-norte.com', discountLevel: 2, canEditPrices: false, commissionFee: 5, sellsOnInstallments: true },
@@ -52,4 +52,21 @@ export const users: User[] = [
     { id: 1, name: 'Admin User', email: 'admin@example.com', role: 'Admin', lastLogin: new Date('2023-11-20') },
     { id: 2, name: 'Sales Person', email: 'sales@example.com', role: 'Sales', lastLogin: new Date('2023-11-19') },
     { id: 3, name: 'Production Head', email: 'production@example.com', role: 'Production', lastLogin: new Date('2023-11-21') },
+];
+
+export const screens = [
+    'Tablero',
+    'Cuentas por Cobrar',
+    'Ventas',
+    'Producción',
+    'Remitos',
+    'Listas de Precios',
+    'Reclamos',
+    'Configuración',
+];
+
+export const roles: Role[] = [
+    { id: 1, name: 'Admin', permissions: [...screens] },
+    { id: 2, name: 'Ventas', permissions: ['Tablero', 'Cuentas por Cobrar', 'Ventas', 'Remitos', 'Listas de Precios', 'Reclamos'] },
+    { id: 3, name: 'Producción', permissions: ['Tablero', 'Producción'] },
 ];

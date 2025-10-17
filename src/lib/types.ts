@@ -89,3 +89,9 @@ export interface User {
   role: 'Admin' | 'Sales' | 'Production';
   lastLogin: Date;
 }
+
+export interface Role {
+  id: number;
+  name: string;
+  permissions: string[];
+}

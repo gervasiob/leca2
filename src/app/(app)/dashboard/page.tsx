@@ -29,7 +29,12 @@ import {
   Calendar as CalendarIcon,
   Activity,
 } from 'lucide-react';
-import { format, subDays, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import {
+  format,
+  isWithinInterval,
+  startOfMonth,
+  endOfMonth,
+} from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -46,32 +51,52 @@ export default function Dashboard() {
     to: endOfMonth(new Date()),
   });
 
-  const totalRevenue = orders
-    .filter((order) => {
-      if (!date?.from || !date?.to) return true;
-      return isWithinInterval(order.orderDate, { start: date.from, end: date.to });
-    })
-    .reduce((sum, order) => sum + order.totalAmount, 0);
-    
-  const pendingToProduceAmount = orderDetails
-    .filter((od) => od.status === 'pending')
-    .reduce((acc, od) => acc + od.totalPrice, 0);
-
-  const pendingRevenue = orderDetails
-    .filter(
-      (od) => od.status !== 'delivered' && od.status !== 'resolved'
-    )
-    .reduce((acc, od) => acc + od.totalPrice, 0);
-
-  const clientsWithPendingBalance = clients.filter(client => {
-    const balance = orderDetails
-        .filter(od => od.clientId === client.id && od.status !== 'delivered' && od.status !== 'resolved')
-        .reduce((acc, od) => acc + od.totalPrice, 0);
-    return balance > 0;
-  }).length;
-
-
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [pendingRevenue, setPendingRevenue] = useState(0);
+  const [clientsWithPendingBalance, setClientsWithPendingBalance] = useState(0);
+  const [pendingToProduceAmount, setPendingToProduceAmount] = useState(0);
+  
   const recentActivities = orderDetails.slice(0, 5);
+  
+  useEffect(() => {
+    const calculatedTotalRevenue = orders
+      .filter((order) => {
+        if (!date?.from || !date?.to) return true;
+        return isWithinInterval(order.orderDate, {
+          start: date.from,
+          end: date.to,
+        });
+      })
+      .reduce((sum, order) => sum + order.totalAmount, 0);
+
+    const calculatedPendingToProduceAmount = orderDetails
+      .filter((od) => od.status === 'pending')
+      .reduce((acc, od) => acc + od.totalPrice, 0);
+
+    const calculatedPendingRevenue = orderDetails
+      .filter(
+        (od) => od.status !== 'delivered' && od.status !== 'resolved'
+      )
+      .reduce((acc, od) => acc + od.totalPrice, 0);
+
+    const calculatedClientsWithPendingBalance = clients.filter((client) => {
+      const balance = orderDetails
+        .filter(
+          (od) =>
+            od.clientId === client.id &&
+            od.status !== 'delivered' &&
+            od.status !== 'resolved'
+        )
+        .reduce((acc, od) => acc + od.totalPrice, 0);
+      return balance > 0;
+    }).length;
+
+    setTotalRevenue(calculatedTotalRevenue);
+    setPendingToProduceAmount(calculatedPendingToProduceAmount);
+    setPendingRevenue(calculatedPendingRevenue);
+    setClientsWithPendingBalance(calculatedClientsWithPendingBalance);
+  }, [date]);
+
 
   return (
     <div className="flex flex-col w-full">
@@ -119,7 +144,9 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ingresos Totales</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Ingresos Totales
+            </CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -133,12 +160,14 @@ export default function Dashboard() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ingresos Pendientes</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Ingresos Pendientes
+            </CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-                ${pendingRevenue.toLocaleString()}
+              ${pendingRevenue.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
               Monto total pendiente de cobro.
@@ -147,11 +176,15 @@ export default function Dashboard() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Clientes con Deuda</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Clientes con Deuda
+            </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+{clientsWithPendingBalance}</div>
+            <div className="text-2xl font-bold">
+              +{clientsWithPendingBalance}
+            </div>
             <p className="text-xs text-muted-foreground">
               Clientes con saldos pendientes.
             </p>
@@ -159,12 +192,14 @@ export default function Dashboard() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Producción Pendiente</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Producción Pendiente
+            </CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-                ${pendingToProduceAmount.toLocaleString()}
+              ${pendingToProduceAmount.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
               Valor de ítems pendientes de producción.
@@ -173,7 +208,9 @@ export default function Dashboard() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Reclamos Abiertos</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Reclamos Abiertos
+            </CardTitle>
             <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>

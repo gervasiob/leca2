@@ -52,8 +52,8 @@ const getClientName = (clientId: number) => {
     return clients.find(c => c.id === clientId)?.name || 'N/A';
 }
 
-const getOrderDate = (orderId: number) => {
-    return orders.find(o => o.id === orderId)?.orderDate || new Date(0);
+const getOrderDate = (orderId: number): Date | null => {
+    return orders.find(o => o.id === orderId)?.orderDate || null;
 }
 
 const statusVariantMap: { [key in OrderDetailStatus]: "default" | "secondary" | "destructive" | "outline" } = {
@@ -101,6 +101,8 @@ export default function SalesOrdersPage() {
             bValue = b[sortConfig.key as keyof OrderDetail];
         }
         
+        if (aValue === null) return 1;
+        if (bValue === null) return -1;
         if (aValue === undefined || bValue === undefined) return 0;
 
         if (aValue < bValue) {
@@ -150,16 +152,19 @@ export default function SalesOrdersPage() {
   );
 
   const handleDownloadCSV = () => {
-    const dataToExport = filteredAndSortedDetails.map((detail) => ({
-      'ID Pedido': `${detail.orderId}-${detail.id}`,
-      'Cliente': getClientName(detail.clientId),
-      'Producto': detail.productName,
-      'Color': detail.color,
-      'Cantidad': detail.quantity,
-      'Estado': statusTranslations[detail.status],
-      'Fecha': format(getOrderDate(detail.orderId), 'dd/MM/yyyy'),
-      'Total': detail.totalPrice,
-    }));
+    const dataToExport = filteredAndSortedDetails.map((detail) => {
+      const orderDate = getOrderDate(detail.orderId);
+      return {
+        'ID Pedido': `${detail.orderId}-${detail.id}`,
+        'Cliente': getClientName(detail.clientId),
+        'Producto': detail.productName,
+        'Color': detail.color,
+        'Cantidad': detail.quantity,
+        'Estado': statusTranslations[detail.status],
+        'Fecha': orderDate ? format(orderDate, 'dd/MM/yyyy') : 'N/A',
+        'Total': detail.totalPrice,
+      }
+    });
 
     const csv = Papa.unparse(dataToExport);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -219,7 +224,9 @@ export default function SalesOrdersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAndSortedDetails.map((detail) => (
+              {filteredAndSortedDetails.map((detail) => {
+                const orderDate = getOrderDate(detail.orderId);
+                return (
                 <TableRow key={detail.id}>
                   <TableCell className="font-medium">#{detail.orderId}-{detail.id}</TableCell>
                   <TableCell>{getClientName(detail.clientId)}</TableCell>
@@ -229,7 +236,7 @@ export default function SalesOrdersPage() {
                   <TableCell>
                     <Badge variant={statusVariantMap[detail.status] || 'default'}>{statusTranslations[detail.status]}</Badge>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell">{format(getOrderDate(detail.orderId), 'dd/MM/yyyy')}</TableCell>
+                  <TableCell className="hidden md:table-cell">{orderDate ? format(orderDate, 'dd/MM/yyyy') : 'N/A'}</TableCell>
                   <TableCell className="text-right">${detail.totalPrice.toLocaleString('es-AR')}</TableCell>
                   <TableCell>
                   <DropdownMenu>
@@ -248,7 +255,7 @@ export default function SalesOrdersPage() {
                   </DropdownMenu>
                   </TableCell>
                 </TableRow>
-              ))}
+              )})}
                {filteredAndSortedDetails.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={9} className="h-24 text-center">

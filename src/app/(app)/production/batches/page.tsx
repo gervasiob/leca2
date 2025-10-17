@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { orderDetails, clients, productionBatches } from '@/lib/data';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
+import { ChevronRight } from 'lucide-react';
 
 const getClientName = (clientId: number) => {
   return clients.find((c) => c.id === clientId)?.name || 'N/A';
@@ -178,6 +179,7 @@ export default function ProductionBatchesPage() {
             </CardDescription>
         </CardHeader>
         <CardContent>
+        <div className="border rounded-md">
         <Table>
               <TableHeader>
                 <TableRow>
@@ -185,28 +187,42 @@ export default function ProductionBatchesPage() {
                   <TableHead>Items</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Production Date</TableHead>
+                   <TableHead>
+                    <span className="sr-only">Actions</span>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {productionBatches.map((batch) => (
-                  <TableRow key={batch.id}>
-                    <TableCell className="font-medium">{batch.batchNumber}</TableCell>
+                  <TableRow key={batch.id} className="hover:bg-muted/50">
+                    <TableCell className="font-medium">
+                        <Link href={`/production/batches/${batch.id}`} className="font-medium text-primary hover:underline">{batch.batchNumber}</Link>
+                    </TableCell>
                     <TableCell>{batch.items.length}</TableCell>
                     <TableCell>
                         <Badge variant={statusVariantMap[batch.status] || 'default'}>{batch.status}</Badge>
                     </TableCell>
                     <TableCell>{format(batch.productionDate, 'PPP')}</TableCell>
+                    <TableCell className="text-right">
+                       <Button variant="ghost" size="icon" asChild>
+                          <Link href={`/production/batches/${batch.id}`}>
+                            <ChevronRight className="h-4 w-4" />
+                            <span className="sr-only">View Details</span>
+                          </Link>
+                        </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
                 {productionBatches.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center">
+                    <TableCell colSpan={5} className="text-center">
                       No production batches found.
                     </TableCell>
                   </TableRow>
                 )}
               </TableBody>
             </Table>
+            </div>
         </CardContent>
       </Card>
     </>

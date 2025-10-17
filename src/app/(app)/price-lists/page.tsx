@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import {
@@ -62,7 +62,7 @@ export default function PriceListsPage() {
   const [previewData, setPreviewData] = useState<PriceUpdatePreview[]>([]);
   const [prices, setPrices] = useState<Record<number, number>>({});
 
-  React.useEffect(() => {
+  useEffect(() => {
     const initialPrices: Record<number, number> = {};
     products.forEach(product => {
       initialPrices[product.id] = getProductPrice(product.id);
@@ -283,7 +283,7 @@ export default function PriceListsPage() {
                   </TableCell>
                   <TableCell>{product.application}</TableCell>
                   <TableCell className="text-right">
-                    ${(prices[product.id] || 0).toLocaleString('es-AR')}
+                    ${(prices[product.id] || 0).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>

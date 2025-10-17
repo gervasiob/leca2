@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,7 +39,8 @@ const statusVariantMap: { [key: string]: 'default' | 'secondary' | 'outline' | '
     'Completed': 'default',
   };
 
-export default function BatchDetailsPage({ params }: { params: { batchId: string } }) {
+export default function BatchDetailsPage() {
+  const params = useParams<{ batchId: string }>();
   const { toast } = useToast();
   const batchId = parseInt(params.batchId, 10);
   const batch = useMemo(() => productionBatches.find(b => b.id === batchId), [batchId]);
@@ -179,11 +180,11 @@ export default function BatchDetailsPage({ params }: { params: { batchId: string
         </CardContent>
         <CardFooter className="flex justify-end gap-2">
             <Button variant="destructive" onClick={handleUnlinkItems} disabled={selectedItems.size === 0}>
-                <X className="mr-2" />
+                <X className="mr-2 h-4 w-4" />
                 Unlink from Batch ({selectedItems.size})
             </Button>
             <Button onClick={handleConfirmProduction} disabled={selectedItems.size === 0}>
-                <Check className="mr-2" />
+                <Check className="mr-2 h-4 w-4" />
                 Confirm Production ({selectedItems.size})
             </Button>
         </CardFooter>

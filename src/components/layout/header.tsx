@@ -20,11 +20,20 @@ import {
   Factory,
   ClipboardList,
   MessageSquareWarning,
+  Settings,
+  User,
+  List,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { PaintBucketIcon } from '../icons';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '../ui/accordion';
 
 const navLinks = [
   { href: '/dashboard', icon: Home, label: 'Dashboard' },
@@ -33,6 +42,11 @@ const navLinks = [
   { href: '/production/batches', icon: Factory, label: 'Production' },
   { href: '/price-lists', icon: ClipboardList, label: 'Price Lists' },
   { href: '/sales/claims', icon: MessageSquareWarning, label: 'Claims' },
+];
+
+const settingsLinks = [
+  { href: '/settings/users', icon: User, label: 'Usuarios' },
+  { href: '/settings/products', icon: List, label: 'Tablas de Productos' },
 ];
 
 export function Header() {
@@ -55,14 +69,14 @@ export function Header() {
             <span className="sr-only">Toggle navigation menu</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left">
-          <nav className="grid gap-6 text-lg font-medium">
+        <SheetContent side="left" className="flex flex-col">
+          <nav className="grid gap-2 text-lg font-medium">
             <Link
               href="#"
-              className="flex items-center gap-2 text-lg font-semibold"
+              className="flex items-center gap-2 text-lg font-semibold mb-4"
             >
               <PaintBucketIcon className="h-6 w-6 text-primary" />
-              <span className="sr-only">Paint Factory</span>
+              <span>Paint Factory</span>
             </Link>
             {navLinks.map(({ href, icon: Icon, label }) => (
               <Link
@@ -74,11 +88,39 @@ export function Header() {
                     : 'text-muted-foreground hover:text-primary'
                 }`}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-5 w-5" />
                 {label}
               </Link>
             ))}
           </nav>
+          <div className="mt-auto">
+             <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="settings" className="border-b-0">
+                <AccordionTrigger className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground hover:text-primary hover:no-underline">
+                   <Settings className="h-5 w-5" />
+                   <span>Settings</span>
+                </AccordionTrigger>
+                <AccordionContent className="pl-8">
+                  <nav className="grid gap-2">
+                    {settingsLinks.map(({ href, icon: Icon, label }) => (
+                       <Link
+                        key={href}
+                        href={href}
+                        className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
+                          pathname.startsWith(href)
+                            ? 'text-primary bg-muted'
+                            : 'text-muted-foreground hover:text-primary'
+                        }`}
+                      >
+                        <Icon className="h-5 w-5" />
+                        {label}
+                      </Link>
+                    ))}
+                  </nav>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
         </SheetContent>
       </Sheet>
       <div className="flex w-full items-center justify-end gap-4 md:ml-auto md:gap-2 lg:gap-4">

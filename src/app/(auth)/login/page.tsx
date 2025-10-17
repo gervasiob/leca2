@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -13,15 +13,36 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { users } from '@/lib/data';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { toast } = useToast();
+  const [email, setEmail] = useState('admin@fabrica.com');
+  const [password, setPassword] = useState('admin');
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // En una aplicación real, aquí iría la lógica de autenticación.
-    // Por ahora, solo redirigimos al dashboard.
-    router.push('/dashboard');
+
+    const user = users.find((u) => u.email === email);
+    
+    // Contraseña de demostración: para 'admin' es 'admin', para otros es su rol en minúscula.
+    const expectedPassword = user?.role === 'Admin' ? 'admin' : user?.role.toLowerCase();
+
+    if (user && password === expectedPassword) {
+      toast({
+        title: 'Inicio de sesión exitoso',
+        description: `Bienvenido de nuevo, ${user.name}.`,
+      });
+      router.push('/dashboard');
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Error de inicio de sesión',
+        description: 'El email o la contraseña son incorrectos.',
+      });
+    }
   };
 
   return (
@@ -42,7 +63,8 @@ export default function LoginPage() {
                 type="email"
                 placeholder="nombre@ejemplo.com"
                 required
-                defaultValue="admin@fabrica.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div className="grid gap-2">
@@ -55,7 +77,13 @@ export default function LoginPage() {
                   ¿Olvidaste tu contraseña?
                 </Link>
               </div>
-              <Input id="password" type="password" required defaultValue="admin" />
+              <Input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
             </div>
             <Button type="submit" className="w-full">
               Iniciar Sesión

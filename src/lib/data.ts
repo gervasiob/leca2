@@ -8,13 +8,13 @@ export const clients: Client[] = [
 ];
 
 export const products: Product[] = [
-    { id: 1, name: 'Pintura Látex Interior Mate 20L', type: 'Pintura', application: 'Rodillo', color: 'Blanco' },
-    { id: 2, name: 'Esmalte Sintético Brillante 4L', type: 'Esmalte', application: 'Pincel', color: 'Blanco' },
-    { id: 3, name: 'Impermeabilizante Techos 10L', type: 'Impermeabilizante', application: 'Rodillo', color: 'Rojo' },
-    { id: 4, name: 'Barniz Marino Exterior 1L', type: 'Barniz', application: 'Pincel', color: 'Transparente' },
-    { id: 5, name: 'Pintura Epoxi Pisos Alto Tránsito 4L', type: 'Epoxi', application: 'Rodillo', color: 'Gris' },
-    { id: 6, name: 'Texturado Fino', type: 'Texturado', application: 'fina', color: 'Arena' },
-    { id: 7, name: 'Texturado Mediano', type: 'Texturado', application: 'media', color: 'Gris Cemento' },
+    { id: 1, name: 'Pintura Látex Interior Mate 20L', type: 'Pintura', application: 'Rodillo', colors: ['Blanco', 'Gris Perla', 'Marfil'] },
+    { id: 2, name: 'Esmalte Sintético Brillante 4L', type: 'Esmalte', application: 'Pincel', colors: ['Blanco', 'Negro', 'Rojo'] },
+    { id: 3, name: 'Impermeabilizante Techos 10L', type: 'Impermeabilizante', application: 'Rodillo', colors: ['Rojo', 'Verde', 'Blanco'] },
+    { id: 4, name: 'Barniz Marino Exterior 1L', type: 'Barniz', application: 'Pincel', colors: ['Transparente', 'Caoba', 'Roble'] },
+    { id: 5, name: 'Pintura Epoxi Pisos Alto Tránsito 4L', type: 'Epoxi', application: 'Rodillo', colors: ['Gris', 'Azul', 'Verde'] },
+    { id: 6, name: 'Texturado Fino', type: 'Texturado', application: 'fina', colors: ['Arena', 'Piedra', 'Blanco Tiza'] },
+    { id: 7, name: 'Texturado Mediano', type: 'Texturado', application: 'media', colors: ['Gris Cemento', 'Terracota', 'Natural'] },
 ];
 
 export const orders: Order[] = [

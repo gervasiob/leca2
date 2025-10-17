@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
@@ -60,10 +60,23 @@ export default function CreateOrderPage() {
     quantity: string;
     color: string;
   }>({ productId: '', quantity: '1', color: '' });
+  
+  const selectedProduct = useMemo(() => {
+    return products.find(p => p.id === parseInt(currentItem.productId, 10));
+  }, [currentItem.productId]);
+
+  useEffect(() => {
+    if (selectedProduct && selectedProduct.colors.length > 0) {
+      setCurrentItem(prev => ({...prev, color: selectedProduct.colors[0]}));
+    } else {
+      setCurrentItem(prev => ({...prev, color: ''}));
+    }
+  }, [selectedProduct]);
+
 
   const handleAddItem = () => {
-    if (!currentItem.productId || !currentItem.quantity) {
-        toast({ title: "Error", description: "Please select a product and quantity.", variant: "destructive"});
+    if (!currentItem.productId || !currentItem.quantity || !currentItem.color) {
+        toast({ title: "Error", description: "Please select a product, color, and quantity.", variant: "destructive"});
         return;
     }
 
@@ -79,7 +92,7 @@ export default function CreateOrderPage() {
     const newItem: OrderItem = {
       productId: product.id,
       productName: product.name,
-      color: currentItem.color || product.color,
+      color: currentItem.color,
       quantity,
       unitPrice,
       totalPrice: quantity * unitPrice,
@@ -166,7 +179,7 @@ export default function CreateOrderPage() {
                 <div className="grid md:grid-cols-5 gap-4 items-end">
                     <div className='md:col-span-2'>
                         <Label htmlFor='product-select'>Product</Label>
-                        <Select value={currentItem.productId} onValueChange={(value) => setCurrentItem({...currentItem, productId: value})}>
+                        <Select value={currentItem.productId} onValueChange={(value) => setCurrentItem({...currentItem, productId: value, color: ''})}>
                             <SelectTrigger id="product-select">
                                 <SelectValue placeholder="Select a product"/>
                             </SelectTrigger>
@@ -180,8 +193,23 @@ export default function CreateOrderPage() {
                         </Select>
                     </div>
                      <div>
-                        <Label htmlFor='color-input'>Color</Label>
-                        <Input id='color-input' placeholder="e.g. Rojo" value={currentItem.color} onChange={e => setCurrentItem({...currentItem, color: e.target.value})} />
+                        <Label htmlFor='color-select'>Color</Label>
+                        <Select
+                            value={currentItem.color}
+                            onValueChange={(value) => setCurrentItem({...currentItem, color: value})}
+                            disabled={!selectedProduct}
+                        >
+                            <SelectTrigger id="color-select">
+                                <SelectValue placeholder="Select a color"/>
+                            </SelectTrigger>
+                            <SelectContent>
+                                {selectedProduct?.colors.map(color => (
+                                    <SelectItem key={color} value={color}>
+                                        {color}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                      </div>
                     <div>
                         <Label htmlFor='quantity-input'>Quantity</Label>

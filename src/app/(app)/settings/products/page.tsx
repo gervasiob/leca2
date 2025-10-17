@@ -24,6 +24,7 @@ import {
     DropdownMenuTrigger,
   } from "@/components/ui/dropdown-menu"
 import { products } from '@/lib/data';
+import { Badge } from '@/components/ui/badge';
 
 export default function ProductSettingsPage() {
   return (
@@ -47,7 +48,7 @@ export default function ProductSettingsPage() {
                         <TableHead>Name</TableHead>
                         <TableHead>Type</TableHead>
                         <TableHead>Application</TableHead>
-                        <TableHead>Color</TableHead>
+                        <TableHead>Colors</TableHead>
                         <TableHead>
                             <span className="sr-only">Actions</span>
                         </TableHead>
@@ -60,7 +61,13 @@ export default function ProductSettingsPage() {
                             <TableCell>{product.name}</TableCell>
                             <TableCell>{product.type}</TableCell>
                             <TableCell>{product.application}</TableCell>
-                            <TableCell>{product.color}</TableCell>
+                            <TableCell>
+                                <div className='flex flex-wrap gap-1'>
+                                    {product.colors.map(color => (
+                                        <Badge key={color} variant="secondary">{color}</Badge>
+                                    ))}
+                                </div>
+                            </TableCell>
                             <TableCell>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>

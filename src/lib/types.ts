@@ -5,7 +5,7 @@ export interface Product {
     name: string;
     type: string;
     application: string;
-    color: string;
+    colors: string[];
 }
 
 export interface OrderDetail {

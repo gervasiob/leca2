@@ -64,6 +64,7 @@ export default function SalesOrdersPage() {
                 <TableHead>Order</TableHead>
                 <TableHead>Client</TableHead>
                 <TableHead>Product</TableHead>
+                <TableHead>Color</TableHead>
                 <TableHead className="text-center">Qty</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="hidden md:table-cell">Date</TableHead>
@@ -79,6 +80,7 @@ export default function SalesOrdersPage() {
                   <TableCell className="font-medium">#{detail.orderId}-{detail.id}</TableCell>
                   <TableCell>{getClientName(detail.clientId)}</TableCell>
                   <TableCell>{detail.productName}</TableCell>
+                  <TableCell>{detail.color}</TableCell>
                   <TableCell className="text-center">{detail.quantity}</TableCell>
                   <TableCell>
                     <Badge variant={statusVariantMap[detail.status] || 'default'}>{detail.status}</Badge>

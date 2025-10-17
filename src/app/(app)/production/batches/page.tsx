@@ -38,11 +38,13 @@ export default function ProductionBatchesPage() {
 
   const groupedPendingOrders: {
     productName: string;
+    color: string;
     totalQuantity: number;
     count: number;
   }[] = pendingOrders.reduce((acc, order) => {
+    const key = `${order.productName}-${order.color}`;
     const existingProduct = acc.find(
-      (p) => p.productName === order.productName
+      (p) => p.productName === order.productName && p.color === order.color
     );
     if (existingProduct) {
       existingProduct.totalQuantity += order.quantity;
@@ -50,12 +52,13 @@ export default function ProductionBatchesPage() {
     } else {
       acc.push({
         productName: order.productName,
+        color: order.color,
         totalQuantity: order.quantity,
         count: 1,
       });
     }
     return acc;
-  }, [] as { productName: string; totalQuantity: number; count: number }[]);
+  }, [] as { productName: string; color: string; totalQuantity: number; count: number }[]);
 
   return (
     <>
@@ -83,6 +86,7 @@ export default function ProductionBatchesPage() {
                   <TableHead>Order</TableHead>
                   <TableHead>Client</TableHead>
                   <TableHead>Product</TableHead>
+                  <TableHead>Color</TableHead>
                   <TableHead className="text-center">Qty</TableHead>
                   <TableHead>Date</TableHead>
                 </TableRow>
@@ -95,6 +99,7 @@ export default function ProductionBatchesPage() {
                     </TableCell>
                     <TableCell>{getClientName(detail.clientId)}</TableCell>
                     <TableCell>{detail.productName}</TableCell>
+                    <TableCell>{detail.color}</TableCell>
                     <TableCell className="text-center">
                       {detail.quantity}
                     </TableCell>
@@ -109,7 +114,7 @@ export default function ProductionBatchesPage() {
                 ))}
                 {pendingOrders.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center">
+                    <TableCell colSpan={6} className="text-center">
                       No pending orders.
                     </TableCell>
                   </TableRow>
@@ -120,7 +125,7 @@ export default function ProductionBatchesPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Pending Orders by Product</CardTitle>
+            <CardTitle>Pending by Product & Color</CardTitle>
             <CardDescription>
               Total quantities of pending products grouped together.
             </CardDescription>
@@ -130,15 +135,19 @@ export default function ProductionBatchesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Product</TableHead>
+                  <TableHead>Color</TableHead>
                   <TableHead className="text-center">Total Quantity</TableHead>
                   <TableHead className="text-center"># Orders</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {groupedPendingOrders.map((product) => (
-                  <TableRow key={product.productName}>
+                  <TableRow key={`${product.productName}-${product.color}`}>
                     <TableCell className="font-medium">
                       {product.productName}
+                    </TableCell>
+                    <TableCell>
+                      {product.color}
                     </TableCell>
                     <TableCell className="text-center">
                       {product.totalQuantity}
@@ -150,7 +159,7 @@ export default function ProductionBatchesPage() {
                 ))}
                 {groupedPendingOrders.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={3} className="text-center">
+                    <TableCell colSpan={4} className="text-center">
                       No pending orders.
                     </TableCell>
                   </TableRow>

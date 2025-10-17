@@ -53,7 +53,9 @@ export default function PriceListsPage() {
               <TableRow>
                 <TableHead>Product ID</TableHead>
                 <TableHead>Product Name</TableHead>
-                <TableHead>Category</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Color</TableHead>
+                <TableHead>Application</TableHead>
                 <TableHead className="text-right">Unit Price</TableHead>
                 <TableHead>
                     <span className="sr-only">Actions</span>
@@ -65,7 +67,9 @@ export default function PriceListsPage() {
                 <TableRow key={product.id}>
                   <TableCell className="font-medium">#{product.id}</TableCell>
                   <TableCell>{product.name}</TableCell>
-                  <TableCell className="hidden md:table-cell">{product.category}</TableCell>
+                  <TableCell className="hidden md:table-cell">{product.type}</TableCell>
+                  <TableCell>{product.color}</TableCell>
+                  <TableCell>{product.application}</TableCell>
                   <TableCell className="text-right">${getProductPrice(product.id).toLocaleString()}</TableCell>
                   <TableCell>
                   <DropdownMenu>

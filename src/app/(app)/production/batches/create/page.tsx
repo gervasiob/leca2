@@ -120,19 +120,20 @@ export default function CreateBatchPage() {
 
   const footerSummary = useMemo(() => {
     const summary = selectedOrderDetails.reduce((acc, item) => {
-        const existing = acc.find(p => p.productName === item.productName);
+        const existing = acc.find(p => p.productName === item.productName && p.color === item.color);
         if (existing) {
             existing.totalQuantity += item.quantity;
             existing.count += 1;
         } else {
             acc.push({
                 productName: item.productName,
+                color: item.color,
                 totalQuantity: item.quantity,
                 count: 1
             });
         }
         return acc;
-    }, [] as { productName: string; totalQuantity: number; count: number }[]);
+    }, [] as { productName: string; color: string; totalQuantity: number; count: number }[]);
     return summary;
   }, [selectedOrderDetails]);
 
@@ -196,6 +197,7 @@ export default function CreateBatchPage() {
                   <SortableHeader sortKey="orderId">Order</SortableHeader>
                   <SortableHeader sortKey="clientName">Client</SortableHeader>
                   <SortableHeader sortKey="productName">Product</SortableHeader>
+                  <SortableHeader sortKey="color">Color</SortableHeader>
                   <SortableHeader sortKey="quantity">Qty</SortableHeader>
                   <SortableHeader sortKey="productionDate">Date</SortableHeader>
                 </TableRow>
@@ -218,6 +220,7 @@ export default function CreateBatchPage() {
                     </TableCell>
                     <TableCell>{getClientName(detail.clientId)}</TableCell>
                     <TableCell>{detail.productName}</TableCell>
+                    <TableCell>{detail.color}</TableCell>
                     <TableCell>{detail.quantity}</TableCell>
                     <TableCell>
                       {format(new Date(), 'dd/MM/yyyy')}
@@ -226,7 +229,7 @@ export default function CreateBatchPage() {
                 ))}
                  {filteredAndSortedOrders.length === 0 && (
                     <TableRow>
-                        <TableCell colSpan={6} className="text-center h-24">
+                        <TableCell colSpan={7} className="text-center h-24">
                             No matching pending orders found.
                         </TableCell>
                     </TableRow>
@@ -245,14 +248,16 @@ export default function CreateBatchPage() {
                 <TableHeader>
                     <TableRow>
                         <TableHead>Product</TableHead>
+                        <TableHead>Color</TableHead>
                         <TableHead className="text-right">Total Quantity</TableHead>
                         <TableHead className="text-right"># of Orders</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {footerSummary.map(summaryItem => (
-                        <TableRow key={summaryItem.productName}>
+                        <TableRow key={`${summaryItem.productName}-${summaryItem.color}`}>
                             <TableCell className="font-medium">{summaryItem.productName}</TableCell>
+                            <TableCell>{summaryItem.color}</TableCell>
                             <TableCell className="text-right">{summaryItem.totalQuantity}</TableCell>
                             <TableCell className="text-right">{summaryItem.count}</TableCell>
                         </TableRow>

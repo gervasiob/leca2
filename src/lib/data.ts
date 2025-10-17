@@ -8,11 +8,13 @@ export const clients: Client[] = [
 ];
 
 export const products: Product[] = [
-    { id: 1, name: 'Pintura Látex Interior Mate 20L', category: 'Látex' },
-    { id: 2, name: 'Esmalte Sintético Brillante Blanco 4L', category: 'Esmalte' },
-    { id: 3, name: 'Impermeabilizante Techos Rojo 10L', category: 'Impermeabilizante' },
-    { id: 4, name: 'Barniz Marino Exterior 1L', category: 'Barniz' },
-    { id: 5, name: 'Pintura Epoxi Pisos Alto Tránsito Gris 4L', category: 'Epoxi' },
+    { id: 1, name: 'Pintura Látex Interior Mate 20L', type: 'Pintura', application: 'Rodillo', color: 'Blanco' },
+    { id: 2, name: 'Esmalte Sintético Brillante 4L', type: 'Esmalte', application: 'Pincel', color: 'Blanco' },
+    { id: 3, name: 'Impermeabilizante Techos 10L', type: 'Impermeabilizante', application: 'Rodillo', color: 'Rojo' },
+    { id: 4, name: 'Barniz Marino Exterior 1L', type: 'Barniz', application: 'Pincel', color: 'Transparente' },
+    { id: 5, name: 'Pintura Epoxi Pisos Alto Tránsito 4L', type: 'Epoxi', application: 'Rodillo', color: 'Gris' },
+    { id: 6, name: 'Texturado Fino', type: 'Texturado', application: 'fina', color: 'Arena' },
+    { id: 7, name: 'Texturado Mediano', type: 'Texturado', application: 'media', color: 'Gris Cemento' },
 ];
 
 export const orders: Order[] = [
@@ -24,15 +26,15 @@ export const orders: Order[] = [
 
 export const orderDetails: OrderDetail[] = [
   // Order 101
-  { id: 1, productId: 1, productName: 'Pintura Látex Interior Mate 20L', orderId: 101, clientId: 1, texture: 'Liso', application: 'Rodillo', quantity: 10, unitPrice: 12000, totalPrice: 120000, status: 'delivered', isProduced: true, productionDate: new Date('2023-10-20'), batchId: 1, productionDoneDate: new Date('2023-10-21'), dispatchedDate: new Date('2023-10-22'), deliveryNoteDate: new Date('2023-10-23') },
-  { id: 2, productId: 2, productName: 'Esmalte Sintético Brillante Blanco 4L', orderId: 101, clientId: 1, texture: 'Brillante', application: 'Pincel', quantity: 5, unitPrice: 6100, totalPrice: 30500, status: 'dispatched', isProduced: true, productionDate: new Date('2023-10-21'), batchId: 1, productionDoneDate: new Date('2023-10-22'), dispatchedDate: new Date('2023-10-23'), deliveryNoteDate: new Date('2023-10-23') },
+  { id: 1, productId: 1, productName: 'Pintura Látex Interior Mate 20L', type: 'Pintura', application: 'Rodillo', color: 'Blanco', quantity: 10, unitPrice: 12000, totalPrice: 120000, orderId: 101, clientId: 1, status: 'delivered', isProduced: true, productionDate: new Date('2023-10-20'), batchId: 1, productionDoneDate: new Date('2023-10-21'), dispatchedDate: new Date('2023-10-22'), deliveryNoteDate: new Date('2023-10-23') },
+  { id: 2, productId: 2, productName: 'Esmalte Sintético Brillante 4L', type: 'Esmalte', application: 'Pincel', color: 'Blanco', quantity: 5, unitPrice: 6100, totalPrice: 30500, orderId: 101, clientId: 1, status: 'dispatched', isProduced: true, productionDate: new Date('2023-10-21'), batchId: 1, productionDoneDate: new Date('2023-10-22'), dispatchedDate: new Date('2023-10-23'), deliveryNoteDate: new Date('2023-10-23') },
   // Order 102
-  { id: 3, productId: 4, productName: 'Barniz Marino Exterior 1L', orderId: 102, clientId: 2, texture: 'Transparente', application: 'Pincel', quantity: 20, unitPrice: 3900, totalPrice: 78000, status: 'delivered', isProduced: true, productionDate: new Date('2023-10-25'), batchId: 2, productionDoneDate: new Date('2023-10-26'), dispatchedDate: new Date('2023-10-27'), deliveryNoteDate: new Date('2023-10-28') },
+  { id: 3, productId: 4, productName: 'Barniz Marino Exterior 1L', type: 'Barniz', application: 'Pincel', color: 'Transparente', quantity: 20, unitPrice: 3900, totalPrice: 78000, orderId: 102, clientId: 2, status: 'delivered', isProduced: true, productionDate: new Date('2023-10-25'), batchId: 2, productionDoneDate: new Date('2023-10-26'), dispatchedDate: new Date('2023-10-27'), deliveryNoteDate: new Date('2023-10-28') },
   // Order 103
-  { id: 4, productId: 5, productName: 'Pintura Epoxi Pisos Alto Tránsito Gris 4L', orderId: 103, clientId: 1, texture: 'Liso', application: 'Rodillo', quantity: 15, unitPrice: 16000, totalPrice: 240000, status: 'produced', isProduced: true, productionDate: new Date('2023-11-08'), batchId: 3, productionDoneDate: new Date('2023-11-09'), dispatchedDate: undefined, deliveryNoteDate: undefined },
+  { id: 4, productId: 5, productName: 'Pintura Epoxi Pisos Alto Tránsito 4L', type: 'Epoxi', application: 'Rodillo', color: 'Gris', quantity: 15, unitPrice: 16000, totalPrice: 240000, orderId: 103, clientId: 1, status: 'produced', isProduced: true, productionDate: new Date('2023-11-08'), batchId: 3, productionDoneDate: new Date('2023-11-09'), dispatchedDate: undefined, deliveryNoteDate: undefined },
   // Order 104
-  { id: 5, productId: 3, productName: 'Impermeabilizante Techos Rojo 10L', orderId: 104, clientId: 3, texture: 'Elastomérico', application: 'Rodillo', quantity: 1, unitPrice: 12500, totalPrice: 12500, status: 'pending', isProduced: false, productionDate: undefined, batchId: undefined, productionDoneDate: undefined, dispatchedDate: undefined, deliveryNoteDate: undefined },
-  { id: 6, productId: 1, productName: 'Pintura Látex Interior Mate 20L', orderId: 103, clientId: 1, texture: 'Liso', application: 'Rodillo', quantity: 5, unitPrice: 12000, totalPrice: 60000, status: 'claimed', isProduced: true, productionDate: new Date('2023-11-10'), batchId: 3, productionDoneDate: new Date('2023-11-11'), dispatchedDate: new Date('2023-11-12'), deliveryNoteDate: new Date('2023-11-13') },
+  { id: 5, productId: 3, productName: 'Impermeabilizante Techos 10L', type: 'Impermeabilizante', application: 'Rodillo', color: 'Rojo', quantity: 1, unitPrice: 12500, totalPrice: 12500, orderId: 104, clientId: 3, status: 'pending', isProduced: false, productionDate: undefined, batchId: undefined, productionDoneDate: undefined, dispatchedDate: undefined, deliveryNoteDate: undefined },
+  { id: 6, productId: 1, productName: 'Pintura Látex Interior Mate 20L', type: 'Pintura', application: 'Rodillo', color: 'Azul', quantity: 5, unitPrice: 12000, totalPrice: 60000, orderId: 103, clientId: 1, status: 'claimed', isProduced: true, productionDate: new Date('2023-11-10'), batchId: 3, productionDoneDate: new Date('2023-11-11'), dispatchedDate: new Date('2023-11-12'), deliveryNoteDate: new Date('2023-11-13') },
 ];
 
 export const productionBatches: ProductionBatch[] = [

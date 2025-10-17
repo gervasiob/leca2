@@ -3,15 +3,18 @@ export type OrderDetailStatus = 'pending' | 'produced' | 'dispatched' | 'deliver
 export interface Product {
     id: number;
     name: string;
-    category: string;
+    type: string;
+    application: string;
+    color: string;
 }
 
 export interface OrderDetail {
   id: number;
   productId: number;
   productName: string;
-  texture: string;
+  type: string;
   application: string;
+  color: string;
   quantity: number;
   unitPrice: number;
   totalPrice: number;

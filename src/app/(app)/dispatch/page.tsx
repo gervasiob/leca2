@@ -17,19 +17,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { orders, orderDetails, clients } from '@/lib/data';
 import type { Order } from '@/lib/types';
 import { useMemo } from 'react';
 import { format } from 'date-fns';
-import { FileText, MoreHorizontal } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { FileText } from 'lucide-react';
+import Link from 'next/link';
 
 const getOrderProductionStatus = (orderId: number) => {
   const items = orderDetails.filter((od) => od.orderId === orderId);
@@ -56,9 +49,16 @@ export default function DispatchPage() {
     orders.forEach((order) => {
       const status = getOrderProductionStatus(order.id);
       if (status === 'completed') {
-        completed.push(order);
+        // Only include orders that haven't been fully dispatched
+        const details = orderDetails.filter(od => od.orderId === order.id);
+        if(details.some(d => d.status === 'produced')) {
+          completed.push(order);
+        }
       } else if (status === 'partial') {
-        partial.push(order);
+        const details = orderDetails.filter(od => od.orderId === order.id);
+        if(details.some(d => d.status === 'produced')) {
+            partial.push(order);
+        }
       }
     });
 
@@ -102,10 +102,12 @@ export default function DispatchPage() {
                       ${order.totalAmount.toLocaleString()}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button size="sm">
-                        <FileText className="mr-2" />
-                        Generar Remito
-                      </Button>
+                        <Button size="sm" asChild>
+                            <Link href={`/dispatch/${order.id}/generate/complete`}>
+                                <FileText className="mr-2" />
+                                Generar Remito
+                            </Link>
+                        </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -151,9 +153,11 @@ export default function DispatchPage() {
                       ${order.totalAmount.toLocaleString()}
                     </TableCell>
                     <TableCell className="text-right">
-                       <Button size="sm">
-                        <FileText className="mr-2" />
-                        Generar Remito Parcial
+                       <Button size="sm" asChild>
+                         <Link href={`/dispatch/${order.id}/generate/partial`}>
+                            <FileText className="mr-2" />
+                            Generar Remito Parcial
+                        </Link>
                       </Button>
                     </TableCell>
                   </TableRow>

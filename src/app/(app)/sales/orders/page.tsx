@@ -1,3 +1,6 @@
+'use client';
+
+import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,7 +20,8 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { orderDetails, orders, clients } from '@/lib/data';
-import { MoreHorizontal } from 'lucide-react';
+import type { OrderDetail } from '@/lib/types';
+import { MoreHorizontal, ArrowUpDown } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -25,7 +29,13 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
   } from "@/components/ui/dropdown-menu"
-  import { format } from 'date-fns';
+import { format } from 'date-fns';
+import { Input } from '@/components/ui/input';
+
+
+type SortKey = keyof OrderDetail | 'clientName' | 'orderDate' | 'totalPrice';
+type SortDirection = 'asc' | 'desc';
+
 
 const getClientName = (clientId: number) => {
     return clients.find(c => c.id === clientId)?.name || 'N/A';
@@ -44,6 +54,89 @@ const statusVariantMap: { [key: string]: "default" | "secondary" | "destructive"
 }
 
 export default function SalesOrdersPage() {
+  const [filter, setFilter] = useState('');
+  const [sortConfig, setSortConfig] = useState<{
+    key: SortKey;
+    direction: SortDirection;
+  } | null>({ key: 'orderId', direction: 'desc' });
+  
+  const filteredAndSortedDetails = useMemo(() => {
+    let filtered = orderDetails.filter((item) => {
+      const clientName = getClientName(item.clientId).toLowerCase();
+      const productName = item.productName.toLowerCase();
+      const orderId = item.orderId.toString();
+      const searchTerm = filter.toLowerCase();
+      return (
+        clientName.includes(searchTerm) || 
+        productName.includes(searchTerm) ||
+        orderId.includes(searchTerm)
+      );
+    });
+
+    if (sortConfig !== null) {
+      filtered.sort((a, b) => {
+        let aValue, bValue;
+
+        if(sortConfig.key === 'clientName') {
+            aValue = getClientName(a.clientId);
+            bValue = getClientName(b.clientId);
+        } else if (sortConfig.key === 'orderDate') {
+            aValue = getOrderDate(a.orderId);
+            bValue = getOrderDate(b.orderId);
+        } else {
+            aValue = a[sortConfig.key as keyof OrderDetail];
+            bValue = b[sortConfig.key as keyof OrderDetail];
+        }
+        
+        if (aValue === undefined || bValue === undefined) return 0;
+
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
+    return filtered;
+  }, [filter, sortConfig]);
+
+  const requestSort = (key: SortKey) => {
+    let direction: SortDirection = 'asc';
+    if (
+      sortConfig &&
+      sortConfig.key === key &&
+      sortConfig.direction === 'asc'
+    ) {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+  
+  const SortableHeader = ({
+    sortKey,
+    children,
+    className,
+  }: {
+    sortKey: SortKey;
+    children: React.ReactNode;
+    className?: string;
+  }) => (
+    <TableHead className={className}>
+      <Button
+        variant="ghost"
+        onClick={() => requestSort(sortKey)}
+        className="px-2"
+      >
+        {children}
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    </TableHead>
+  );
+
+
   return (
     <>
       <PageHeader
@@ -56,26 +149,34 @@ export default function SalesOrdersPage() {
         <CardHeader>
           <CardTitle>Order Details</CardTitle>
           <CardDescription>All items across all orders.</CardDescription>
+          <div className="pt-4">
+              <Input
+                placeholder="Filter by order, client or product..."
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                className="max-w-sm"
+              />
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Order</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Product</TableHead>
-                <TableHead>Color</TableHead>
-                <TableHead className="text-center">Qty</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="hidden md:table-cell">Date</TableHead>
-                <TableHead className="text-right">Total</TableHead>
+                <SortableHeader sortKey="orderId">Order</SortableHeader>
+                <SortableHeader sortKey="clientName">Client</SortableHeader>
+                <SortableHeader sortKey="productName">Product</SortableHeader>
+                <SortableHeader sortKey="color">Color</SortableHeader>
+                <SortableHeader sortKey="quantity" className="text-center">Qty</SortableHeader>
+                <SortableHeader sortKey="status">Status</SortableHeader>
+                <SortableHeader sortKey="orderDate" className="hidden md:table-cell">Date</SortableHeader>
+                <SortableHeader sortKey="totalPrice" className="text-right">Total</SortableHeader>
                 <TableHead>
                     <span className="sr-only">Actions</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {orderDetails.map((detail) => (
+              {filteredAndSortedDetails.map((detail) => (
                 <TableRow key={detail.id}>
                   <TableCell className="font-medium">#{detail.orderId}-{detail.id}</TableCell>
                   <TableCell>{getClientName(detail.clientId)}</TableCell>
@@ -105,6 +206,13 @@ export default function SalesOrdersPage() {
                   </TableCell>
                 </TableRow>
               ))}
+               {filteredAndSortedDetails.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={9} className="h-24 text-center">
+                    No results found.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

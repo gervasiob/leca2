@@ -223,7 +223,7 @@ export default function CreateBatchPage() {
                     <TableCell>{detail.color}</TableCell>
                     <TableCell>{detail.quantity}</TableCell>
                     <TableCell>
-                      {format(new Date(), 'dd/MM/yyyy')}
+                      {detail.productionDate ? format(detail.productionDate, 'dd/MM/yyyy') : '-'}
                     </TableCell>
                   </TableRow>
                 ))}

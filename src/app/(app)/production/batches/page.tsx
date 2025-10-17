@@ -105,11 +105,7 @@ export default function ProductionBatchesPage() {
                       {detail.quantity}
                     </TableCell>
                     <TableCell>
-                      {format(
-                        orderDetails.find((o) => o.orderId === detail.orderId)
-                          ?.productionDate || new Date(),
-                        'dd/MM/yyyy'
-                      )}
+                      {detail.productionDate ? format(detail.productionDate, 'dd/MM/yyyy') : '-'}
                     </TableCell>
                   </TableRow>
                 ))}

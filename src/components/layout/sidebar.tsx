@@ -25,7 +25,7 @@ import {
   User,
   List,
   FileText,
-  UsersCog,
+  UserCog,
 } from 'lucide-react';
 import { PaintBucketIcon } from '../icons';
 import { cn } from '@/lib/utils';
@@ -43,7 +43,7 @@ const navLinks = [
 
 const settingsLinks = [
   { href: '/settings/users', icon: User, label: 'Usuarios' },
-  { href: '/settings/roles', icon: UsersCog, label: 'Roles y Permisos' },
+  { href: '/settings/roles', icon: UserCog, label: 'Roles y Permisos' },
   { href: '/settings/products', icon: List, label: 'Tablas de Productos' },
 ];
 

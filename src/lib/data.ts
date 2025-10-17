@@ -1,4 +1,4 @@
-import type { Client, Order, OrderDetail, ProductionBatch, Product, Claim } from './types';
+import type { Client, Order, OrderDetail, ProductionBatch, Product, Claim, User } from './types';
 
 export const clients: Client[] = [
   { id: 1, name: 'Constructora del Norte S.A.', cuit: '30-12345678-9', address: 'Av. Siempre Viva 742', phone: '11-2345-6789', email: 'compras@constructora-norte.com', discountLevel: 2, canEditPrices: false, commissionFee: 5, sellsOnInstallments: true },
@@ -46,4 +46,10 @@ export const productionBatches: ProductionBatch[] = [
 
 export const claims: Claim[] = [
     { id: 1, orderDetailId: 6, orderId: 103, clientId: 1, clientName: 'Constructora del Norte S.A.', reason: 'Color incorrecto', status: 'open', resolution: undefined, createdAt: new Date('2023-11-15') },
+];
+
+export const users: User[] = [
+    { id: 1, name: 'Admin User', email: 'admin@example.com', role: 'Admin', lastLogin: new Date('2023-11-20') },
+    { id: 2, name: 'Sales Person', email: 'sales@example.com', role: 'Sales', lastLogin: new Date('2023-11-19') },
+    { id: 3, name: 'Production Head', email: 'production@example.com', role: 'Production', lastLogin: new Date('2023-11-21') },
 ];

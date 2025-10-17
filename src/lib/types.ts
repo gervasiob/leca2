@@ -81,3 +81,11 @@ export interface Claim {
     resolution?: string;
     createdAt: Date;
 }
+
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: 'Admin' | 'Sales' | 'Production';
+  lastLogin: Date;
+}

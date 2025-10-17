@@ -76,12 +76,12 @@ export default function CreateOrderPage() {
 
 
   useEffect(() => {
-    if (selectedProduct && selectedProduct.colors.length > 0) {
+    if (selectedProduct && selectedProduct.colors.length > 0 && !selectedProduct.colors.includes(currentItem.color)) {
       setCurrentItem(prev => ({...prev, color: selectedProduct.colors[0]}));
-    } else {
+    } else if (!selectedProduct) {
       setCurrentItem(prev => ({...prev, color: ''}));
     }
-  }, [selectedProduct]);
+  }, [selectedProduct, currentItem.color]);
 
 
   const handleAddItem = () => {
@@ -207,7 +207,7 @@ export default function CreateOrderPage() {
                             placeholder='Select a color'
                             searchPlaceholder='Search colors...'
                             noResultsMessage='No colors found.'
-                            className={!selectedProduct ? "disabled:cursor-not-allowed disabled:opacity-50" : ""}
+                            disabled={!selectedProduct}
                         />
                      </div>
                     <div>

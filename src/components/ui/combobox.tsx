@@ -32,6 +32,7 @@ interface ComboboxProps {
     searchPlaceholder?: string;
     noResultsMessage?: string;
     className?: string;
+    disabled?: boolean;
 }
 
 export function Combobox({ 
@@ -41,7 +42,8 @@ export function Combobox({
     placeholder = "Select an option...",
     searchPlaceholder = "Search...",
     noResultsMessage= "No results found.",
-    className
+    className,
+    disabled
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
 
@@ -57,6 +59,7 @@ export function Combobox({
           role="combobox"
           aria-expanded={open}
           className={cn("w-full justify-between", !value && "text-muted-foreground", className)}
+          disabled={disabled}
         >
           {selectedOption?.label ?? placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />

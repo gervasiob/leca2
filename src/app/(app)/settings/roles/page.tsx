@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import {
@@ -53,6 +52,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
+import { useEffect, useState } from 'react';
 
 export default function RolesSettingsPage() {
   const { toast } = useToast();
@@ -63,6 +63,35 @@ export default function RolesSettingsPage() {
     name: string;
     permissions: string[];
   }>({ name: '', permissions: [] });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const loadRoles = async () => {
+      try {
+        const res = await fetch('/api/roles', { credentials: 'include' });
+        const data = await res.json();
+        if (res.ok && data?.roles) {
+          setRoles(data.roles);
+        } else {
+          toast({
+            title: 'Error',
+            description: data?.error ?? 'No se pudieron cargar los roles.',
+            variant: 'destructive',
+          });
+        }
+      } catch (e: any) {
+        toast({
+          title: 'Error',
+          description: e?.message ?? 'Error de red al cargar roles.',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadRoles();
+  }, []);
 
   const handleOpenDialog = (role: Role | null = null) => {
     if (role) {
@@ -84,7 +113,9 @@ export default function RolesSettingsPage() {
     });
   };
 
-  const handleSaveRole = () => {
+  const normalizeName = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+
+  const handleSaveRole = async () => {
     if (!roleFormData.name) {
       toast({
         title: 'Error',
@@ -94,40 +125,91 @@ export default function RolesSettingsPage() {
       return;
     }
 
-    if (editingRole) {
-      // Edit existing role
-      setRoles(
-        roles.map((r) =>
-          r.id === editingRole.id ? { ...r, ...roleFormData } : r
-        )
-      );
+    // Validación de duplicados (case/diacríticos-insensitive)
+    const nameNorm = normalizeName(roleFormData.name);
+    const exists = roles.some((r) => normalizeName(r.name) === nameNorm);
+    const isSameAsEditing = editingRole && normalizeName(editingRole.name) === nameNorm;
+    if (exists && !isSameAsEditing) {
       toast({
-        title: 'Rol actualizado',
-        description: `El rol "${roleFormData.name}" ha sido actualizado.`,
+        title: 'Nombre duplicado',
+        description: 'Ya existe un rol con ese nombre.',
+        variant: 'destructive',
       });
-    } else {
-      // Create new role
-      const newRole: Role = {
-        id: Math.max(...roles.map((r) => r.id), 0) + 1,
-        name: roleFormData.name,
-        permissions: roleFormData.permissions,
-      };
-      setRoles([...roles, newRole]);
-      toast({
-        title: 'Rol creado',
-        description: `El rol "${roleFormData.name}" ha sido creado.`,
-      });
+      return;
     }
-    setDialogOpen(false);
+
+    setSaving(true);
+    try {
+      if (editingRole) {
+        const res = await fetch(`/api/roles/${editingRole.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(roleFormData),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data?.error ?? 'No se pudo actualizar el rol.');
+        }
+        const updated = data.role as Role;
+        setRoles(roles.map((r) => (r.id === updated.id ? updated : r)));
+        toast({
+          title: 'Rol actualizado',
+          description: `El rol "${updated.name}" ha sido actualizado.`,
+        });
+      } else {
+        const res = await fetch('/api/roles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(roleFormData),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data?.error ?? 'No se pudo crear el rol.');
+        }
+        const created = data.role as Role;
+        setRoles([...roles, created]);
+        toast({
+          title: 'Rol creado',
+          description: `El rol "${created.name}" ha sido creado.`,
+        });
+      }
+      setDialogOpen(false);
+    } catch (e: any) {
+      toast({
+        title: 'Error',
+        description: e?.message ?? 'Operación fallida.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleDeleteRole = (roleId: number) => {
-    setRoles(roles.filter((r) => r.id !== roleId));
-    toast({
-      title: 'Rol eliminado',
-      description: 'El rol ha sido eliminado correctamente.',
-      variant: 'destructive',
-    });
+  const handleDeleteRole = async (roleId: number) => {
+    try {
+      const res = await fetch(`/api/roles/${roleId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error ?? 'No se pudo eliminar el rol.');
+      }
+      setRoles(roles.filter((r) => r.id !== roleId));
+      toast({
+        title: 'Rol eliminado',
+        description: 'El rol ha sido eliminado correctamente.',
+        variant: 'destructive',
+      });
+    } catch (e: any) {
+      toast({
+        title: 'Error',
+        description: e?.message ?? 'No se pudo eliminar el rol.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -150,84 +232,88 @@ export default function RolesSettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="border rounded-lg overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[200px]">Rol</TableHead>
-                  {screens.map((screen) => (
-                    <TableHead key={screen} className="text-center">
-                      {screen}
-                    </TableHead>
-                  ))}
-                  <TableHead className="w-[50px]">
-                    <span className="sr-only">Acciones</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {roles.map((role) => (
-                  <TableRow key={role.id}>
-                    <TableCell className="font-medium">{role.name}</TableCell>
+          {loading ? (
+            <div className="p-4 text-muted-foreground">Cargando roles...</div>
+          ) : (
+            <div className="border rounded-lg overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[200px]">Rol</TableHead>
                     {screens.map((screen) => (
-                      <TableCell key={screen} className="text-center">
-                        <Checkbox
-                          checked={role.permissions.includes(screen)}
-                          aria-label={`Permiso para ${screen}`}
-                        />
-                      </TableCell>
+                      <TableHead key={screen} className="text-center">
+                        {screen}
+                      </TableHead>
                     ))}
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            aria-haspopup="true"
-                            size="icon"
-                            variant="ghost"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Alternar menú</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => handleOpenDialog(role)}>
-                            Editar
-                          </DropdownMenuItem>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <DropdownMenuItem
-                                onSelect={(e) => e.preventDefault()}
-                                className="text-destructive"
-                              >
-                                Eliminar
-                              </DropdownMenuItem>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Esta acción no se puede deshacer. Esto eliminará permanentemente el rol.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDeleteRole(role.id)}
+                    <TableHead className="w-[50px]">
+                      <span className="sr-only">Acciones</span>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {roles.map((role) => (
+                    <TableRow key={role.id}>
+                      <TableCell className="font-medium">{role.name}</TableCell>
+                      {screens.map((screen) => (
+                        <TableCell key={screen} className="text-center">
+                          <Checkbox
+                            checked={role.permissions.includes(screen)}
+                            aria-label={`Permiso para ${screen}`}
+                          />
+                        </TableCell>
+                      ))}
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              aria-haspopup="true"
+                              size="icon"
+                              variant="ghost"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Alternar menú</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => handleOpenDialog(role)}>
+                              Editar
+                            </DropdownMenuItem>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <DropdownMenuItem
+                                  onSelect={(e) => e.preventDefault()}
+                                  className="text-destructive"
                                 >
                                   Eliminar
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                                </DropdownMenuItem>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Esta acción no se puede deshacer. Esto eliminará permanentemente el rol.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteRole(role.id)}
+                                  >
+                                    Eliminar
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -286,7 +372,7 @@ export default function RolesSettingsPage() {
                 Cancelar
               </Button>
             </DialogClose>
-            <Button type="submit" onClick={handleSaveRole}>
+            <Button type="submit" onClick={handleSaveRole} disabled={saving}>
               Guardar Cambios
             </Button>
           </DialogFooter>

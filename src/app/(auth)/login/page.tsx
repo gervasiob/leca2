@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,34 +14,51 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { users } from '@/lib/data';
+
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const [email, setEmail] = useState('admin@fabrica.com');
   const [password, setPassword] = useState('admin');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
 
-    const user = users.find((u) => u.email === email);
-    
-    // Contraseña de demostración: para 'admin' es 'admin', para otros es su rol en minúscula.
-    const expectedPassword = user?.role === 'Admin' ? 'admin' : user?.role.toLowerCase();
-
-    if (user && password === expectedPassword) {
-      toast({
-        title: 'Inicio de sesión exitoso',
-        description: `Bienvenido de nuevo, ${user.name}.`,
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       });
-      router.push('/dashboard');
-    } else {
+      const data = await res.json();
+
+      if (res.ok && data?.ok && data?.user) {
+        toast({
+          title: 'Inicio de sesión exitoso',
+          description: `Bienvenido de nuevo, ${data.user.name}.`,
+        });
+        const next = searchParams.get('next');
+        router.push(next || '/dashboard');
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Error de inicio de sesión',
+          description: data?.error || 'El email o la contraseña son incorrectos.',
+        });
+      }
+    } catch (err) {
       toast({
         variant: 'destructive',
-        title: 'Error de inicio de sesión',
-        description: 'El email o la contraseña son incorrectos.',
+        title: 'Error de red',
+        description: 'No se pudo iniciar sesión. Intenta nuevamente.',
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -85,8 +102,8 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-            <Button type="submit" className="w-full">
-              Iniciar Sesión
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Ingresando...' : 'Iniciar Sesión'}
             </Button>
           </div>
         </form>

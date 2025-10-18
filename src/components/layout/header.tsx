@@ -36,6 +36,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '../ui/accordion';
+import { useToast } from '@/hooks/use-toast';
 
 const mainNavLinks = [
   { href: '/dashboard', icon: Home, label: 'Tablero' },
@@ -63,9 +64,20 @@ const settingsLinks = [
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
+  const { toast } = useToast();
 
-  const handleLogout = () => {
-    router.push('/login');
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+    } catch {}
+
+    try {
+      document.cookie = 'auth_user=; Max-Age=0; path=/';
+    } catch {}
+
+    toast({ title: 'Sesión cerrada', description: 'Has salido de tu cuenta.' });
+    router.replace('/login');
+    router.refresh();
   };
 
   const renderLink = (href: string, Icon: React.ElementType, label: string) => (

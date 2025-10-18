@@ -9,7 +9,7 @@ export default function AuthLayout({
     <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted/40 p-4">
       <div className="absolute top-8 left-8 flex items-center gap-2 text-lg font-semibold">
         <PaintBucketIcon className="h-6 w-6 text-primary" />
-        <span className="font-headline">Fábrica de Pintura</span>
+        <span className="font-headline">Lecatex</span>
       </div>
       {children}
     </div>

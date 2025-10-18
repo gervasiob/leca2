@@ -44,11 +44,14 @@ import {
 } from '@/components/ui/popover';
 import { DateRange } from 'react-day-picker';
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 import type { OrderDetail } from '@/lib/types';
 
 const loggedInUser = users.find(u => u.id === 2); // Simulating sales user logged in
 
 export default function Dashboard() {
+  const router = useRouter();
+  const [authChecked, setAuthChecked] = useState(false);
   const [date, setDate] = useState<DateRange | undefined>({
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date()),
@@ -60,6 +63,18 @@ export default function Dashboard() {
   const [pendingToProduceAmount, setPendingToProduceAmount] = useState(0);
   const [recentActivities, setRecentActivities] = useState<OrderDetail[]>([]);
   
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/me', { credentials: 'include' });
+        if (!res.ok) throw new Error('No autenticado');
+        setAuthChecked(true);
+      } catch {
+        router.replace('/login?next=/dashboard');
+      }
+    })();
+  }, []);
+
   useEffect(() => {
     const isSalesRole = loggedInUser?.role === 'Sales';
     const salesUserOrderIds = isSalesRole 
@@ -108,7 +123,10 @@ export default function Dashboard() {
     setRecentActivities(filteredOrderDetails.slice(0, 5));
   }, [date]);
 
-
+  if (!authChecked) {
+    return null;
+  }
+  
   return (
     <div className="flex flex-col w-full">
       <PageHeader

@@ -37,6 +37,8 @@ import {
   AccordionTrigger,
 } from '../ui/accordion';
 import { useToast } from '@/hooks/use-toast';
+import { useEffect, useState } from 'react';
+import { normalizeName, ROLE_NAME_MAP } from '@/lib/rbac';
 
 const mainNavLinks = [
   { href: '/dashboard', icon: Home, label: 'Tablero' },
@@ -66,19 +68,33 @@ export function Header() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/logout', { method: 'POST', credentials: 'include' });
-    } catch {}
+  const [allowedScreens, setAllowedScreens] = useState<string[] | null>(null);
 
-    try {
-      document.cookie = 'auth_user=; Max-Age=0; path=/';
-    } catch {}
+  useEffect(() => {
+    const loadPermissions = async () => {
+      try {
+        const meRes = await fetch('/api/me', { credentials: 'include' });
+        const meData = await meRes.json();
+        if (!meRes.ok || !meData?.user?.role) {
+          setAllowedScreens([]);
+          return;
+        }
+        const enumRole: string = meData.user.role as string;
+        const roleName = ROLE_NAME_MAP[enumRole] ?? enumRole;
+        const rolesRes = await fetch('/api/roles', { credentials: 'include' });
+        const rolesData = await rolesRes.json();
+        const role = Array.isArray(rolesData?.roles)
+          ? rolesData.roles.find((r: any) => normalizeName(r.name) === normalizeName(roleName))
+          : null;
+        setAllowedScreens(role?.permissions ?? []);
+      } catch {
+        setAllowedScreens([]);
+      }
+    };
+    loadPermissions();
+  }, []);
 
-    toast({ title: 'Sesión cerrada', description: 'Has salido de tu cuenta.' });
-    router.replace('/login');
-    router.refresh();
-  };
+  const can = (screen: string) => !!allowedScreens?.includes(screen);
 
   const renderLink = (href: string, Icon: React.ElementType, label: string) => (
      <Link
@@ -94,6 +110,32 @@ export function Header() {
         {label}
       </Link>
   );
+
+  const visibleMainLinks = mainNavLinks.filter(({ label }) => can(label));
+  const visibleSalesLinks = salesNavLinks.filter(({ label }) =>
+    label === 'Reclamos' ? can('Reclamos') : can('Ventas')
+  );
+  const visibleOtherLinks = otherNavLinks.filter(({ label }) => {
+    if (label === 'Producción') return can('Producción');
+    if (label === 'Remitos') return can('Remitos');
+    if (label === 'Listas de Precios') return can('Listas de Precios');
+    return true;
+  });
+  const canSettings = can('Configuración');
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+    } catch {}
+
+    try {
+      document.cookie = 'auth_user=; Max-Age=0; path=/';
+    } catch {}
+
+    toast({ title: 'Sesión cerrada', description: 'Has salido de tu cuenta.' });
+    router.replace('/login');
+    router.refresh();
+  };
 
   return (
     <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-30">
@@ -123,26 +165,29 @@ export function Header() {
               <span>Fábrica de Pintura</span>
             </Link>
             
-            {mainNavLinks.map(({ href, icon: Icon, label }) => renderLink(href, Icon, label))}
+            {visibleMainLinks.map(({ href, icon: Icon, label }) => renderLink(href, Icon, label))}
             
-            <Accordion type="single" collapsible className="w-full" defaultValue={pathname.startsWith('/sales') ? 'sales' : undefined}>
-              <AccordionItem value="sales" className="border-b-0">
-                <AccordionTrigger className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground hover:text-primary hover:no-underline [&[data-state=open]>svg]:rotate-180">
-                   <ShoppingCart className="h-5 w-5" />
-                   <span>Ventas</span>
-                </AccordionTrigger>
-                <AccordionContent className="pl-8">
-                  <nav className="grid gap-1">
-                    {salesNavLinks.map(({ href, icon: Icon, label }) => renderLink(href, Icon, label))}
-                  </nav>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+            {visibleSalesLinks.length > 0 && (
+              <Accordion type="single" collapsible className="w-full" defaultValue={pathname.startsWith('/sales') ? 'sales' : undefined}>
+                <AccordionItem value="sales" className="border-b-0">
+                  <AccordionTrigger className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground hover:text-primary hover:no-underline [&[data-state=open]>svg]:rotate-180">
+                     <ShoppingCart className="h-5 w-5" />
+                     <span>Ventas</span>
+                  </AccordionTrigger>
+                  <AccordionContent className="pl-8">
+                    <nav className="grid gap-1">
+                      {visibleSalesLinks.map(({ href, icon: Icon, label }) => renderLink(href, Icon, label))}
+                    </nav>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            )}
             
-            {otherNavLinks.map(({ href, icon: Icon, label }) => renderLink(href, Icon, label))}
+            {visibleOtherLinks.map(({ href, icon: Icon, label }) => renderLink(href, Icon, label))}
 
           </nav>
           <div className="mt-auto">
+            {canSettings && (
              <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="settings" className="border-b-0">
                 <AccordionTrigger className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground hover:text-primary hover:no-underline">
@@ -156,6 +201,7 @@ export function Header() {
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
+            )}
           </div>
         </SheetContent>
       </Sheet>

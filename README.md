@@ -9,7 +9,7 @@ Guía para correr migraciones y seeders, tanto en local como en nube.
   - `postgresql://postgres:<PASSWORD>@<HOST>:5432/<DB>?schema=public`
 - Si tu contraseña tiene caracteres especiales (`@ # ? < >`), usa percent-encoding. Ejemplo ya aplicado:
   - `postgresql://postgres:mJ6Bj%3FVv%23%3CUH%297M%40@34.29.26.213:5432/lecatexdb?schema=public`
-- En bases remotas administradas (Neon/Render/Cloud SQL), agrega `&sslmode=require` si el proveedor exige TLS.
+- En bases remotas administradas (Neon/Render/Cloud SQL/Supabase), agrega `&sslmode=require` si el proveedor exige TLS.
 
 ## Migraciones (desarrollo/local)
 1) Verificar/editar el esquema en `prisma/schema.prisma`.

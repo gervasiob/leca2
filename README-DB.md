@@ -1,34 +1,63 @@
-# Base de datos (Supabase + PostgreSQL)
+# Base de datos (Prisma + Supabase/PostgreSQL)
 
-Guía para trabajar con tu base de datos de Supabase.
+Guía para conectar Prisma a tu base de datos PostgreSQL alojada en Supabase.
 
 ## Conexión
 
-La conexión a Supabase se configura en `src/lib/supabase.ts`, utilizando las variables de entorno `SUPABASE_URL` y `SUPABASE_KEY` definidas en tu archivo `.env`.
+1.  **Obtén la cadena de conexión de Supabase:**
+    *   Ve a tu proyecto en [Supabase](https://app.supabase.com).
+    *   Navega a `Project Settings` (el ícono de engranaje) > `Database`.
+    *   En la sección `Connection string`, copia la URL que corresponde al modo `Transaction` (puerto `5432`).
 
-El cliente de Supabase está disponible para ser importado en toda la aplicación desde `@/lib/supabase`.
+2.  **Configura la variable de entorno:**
+    *   Abre el archivo `.env` en la raíz de tu proyecto.
+    *   Pega la cadena de conexión como el valor de `DATABASE_URL`.
+    *   Reemplaza `[YOUR-PASSWORD]` con la contraseña de tu base de datos de Supabase.
+    *   Asegúrate de que la URL incluya `&sslmode=require` al final, ya que Supabase lo necesita para conexiones externas.
 
-## Estructura de la Base de Datos
+    **Ejemplo en `.env`:**
+    ```
+    DATABASE_URL="postgresql://postgres:tu-contraseña-aqui@db.xxxxxxxx.supabase.co:5432/postgres?schema=public&sslmode=require"
+    ```
 
-Puedes gestionar el esquema de tu base de datos, las tablas y los datos directamente desde el [Dashboard de Supabase](https://app.supabase.com).
+## Migraciones con Prisma
 
-1.  **Ve a tu proyecto** en Supabase.
-2.  Usa el **Editor de Tablas** (`Table Editor`) para crear y modificar tablas.
-3.  Usa el **Editor de SQL** (`SQL Editor`) para ejecutar migraciones o scripts de `seed`.
+Una vez que tu `DATABASE_URL` está configurada, puedes usar los comandos de Prisma para gestionar el esquema de tu base de datos en Supabase.
 
-## Migraciones y Seeds
+1.  **Modifica tu esquema:** Edita el archivo `prisma/schema.prisma` para definir tus modelos de datos.
 
-A diferencia de Prisma, Supabase no tiene un sistema de migraciones basado en archivos por defecto en el lado del cliente. Las migraciones se gestionan principalmente a través de su Dashboard o usando la [Supabase CLI](https://supabase.com/docs/guides/cli).
+2.  **Genera el cliente de Prisma:**
+    ```bash
+    npx prisma generate
+    ```
 
-### Para cargar datos iniciales (seed):
+3.  **Aplica las migraciones:** Para crear o actualizar las tablas en tu base de datos de Supabase, ejecuta:
+    ```bash
+    npx prisma migrate dev --name "nombre-descriptivo-de-la-migracion"
+    ```
 
-1.  Navega al **SQL Editor** en tu proyecto de Supabase.
-2.  Pega y ejecuta tus sentencias `INSERT` para poblar las tablas.
+    Si estás desplegando en un entorno de producción, usa:
+    ```bash
+    npx prisma migrate deploy
+    ```
 
-Puedes adaptar los datos que se encontraban en `src/lib/data.ts` para crear tus scripts de `seed`.
+## Carga de datos iniciales (Seeding)
+
+Puedes usar el seeder de Prisma para poblar tu base de datos en Supabase.
+
+1.  **Define tus datos:** Edita el archivo `prisma/seed.ts`.
+2.  **Ejecuta el seeder:**
+    ```bash
+    npx prisma db seed
+    ```
 
 ## Verificación
 
-- Ejecuta el servidor de desarrollo:
-  - `npm run dev` (puerto `9002`)
-- Comprueba la salud de la aplicación. Las páginas que usan datos ahora deberían obtenerlos de Supabase.
+- **Prisma Studio:** Para inspeccionar tu base de datos de Supabase a través de una interfaz gráfica, usa:
+  ```bash
+  npx prisma studio
+  ```
+- **Servidor de desarrollo:** Inicia la aplicación y comprueba que las páginas que obtienen datos funcionan correctamente.
+  ```bash
+  npm run dev
+  ```

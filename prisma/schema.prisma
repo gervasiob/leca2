@@ -1,3 +1,6 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,173 +10,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Enums derived from TypeScript types
-enum ProductStatus {
-  active
-  inactive
-}
-
-enum OrderDetailStatus {
-  pending
-  produced
-  dispatched
-  delivered
-  claimed
-  resolved
-  cancelled
-}
-
-enum ProductionBatchStatus {
-  PLANNED
-  IN_PROGRESS
-  COMPLETED
-}
-
-enum ClaimStatus {
-  open
-  resolved
-  closed
-}
-
-enum UserRole {
-  Admin
-  Sales
-  Production
-  Invitado
-}
-
-enum OrderStatus {
-  partial
-  complete
-  pending
-  in_production
-}
-
-model Product {
-  id           Int              @id @default(autoincrement())
-  name         String
-  type         String
-  application  String
-  colors       String[]
-  status       ProductStatus
-  orderDetails OrderDetail[]
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-}
-
-model Client {
-  id                  Int              @id @default(autoincrement())
-  name                String
-  cuit                String           @unique
-  address             String
-  phone               String
-  email               String
-  discountLevel       Int
-  canEditPrices       Boolean
-  commissionFee       Float
-  sellsOnInstallments Boolean
-  orders              Order[]
-  orderDetails        OrderDetail[]
-  claims              Claim[]
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
-}
-
-model User {
-  id        Int       @id @default(autoincrement())
-  name      String
-  email     String    @unique
-  passwordHash String
-  role      UserRole
-  lastLogin DateTime
-  orders    Order[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-}
-
-// Static RBAC configuration model to store permissions per role
-model Role {
-  id          Int       @id @default(autoincrement())
-  name        String    @unique
-  permissions String[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-}
-
-model Order {
-  id           Int         @id @default(autoincrement())
-  user         User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
-  userId       Int?
-  client       Client      @relation(fields: [clientId], references: [id])
-  clientId     Int
-  clientName   String
-  status       OrderStatus
-  totalAmount  Decimal     @db.Decimal(10, 2)
-  orderDate    DateTime
-  isPartial    Boolean
-  orderDetails OrderDetail[]
-  claims       Claim[]
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-}
-
-model OrderDetail {
-  id                Int                  @id @default(autoincrement())
-  product           Product              @relation(fields: [productId], references: [id])
-  productId         Int
-  productName       String
-  type              String
-  application       String
-  color             String
-  quantity          Int
-  unitPrice         Decimal               @db.Decimal(10, 2)
-  totalPrice        Decimal               @db.Decimal(10, 2)
-  order             Order                @relation(fields: [orderId], references: [id])
-  orderId           Int
-  client            Client               @relation(fields: [clientId], references: [id])
-  clientId          Int
-  cartId            String?
-  paymentId         Int?
-  deliveryNoteId    Int?
-  batch             ProductionBatch?     @relation(fields: [batchId], references: [id])
-  batchId           Int?
-  status            OrderDetailStatus
-  isProduced        Boolean
-  productionDate    DateTime?
-  productionDoneDate DateTime?
-  dispatchReadyDate DateTime?
-  dispatchedDate    DateTime?
-  deliveryNoteDate  DateTime?
-  claims            Claim[]
-  createdAt         DateTime             @default(now())
-  updatedAt         DateTime             @updatedAt
-}
-
-model ProductionBatch {
-  id               Int                  @id @default(autoincrement())
-  batchNumber      String               @unique
-  productionDate   DateTime
-  plannedDate      DateTime
-  expeditionDate   DateTime?
-  sentToClientDate DateTime?
-  items            OrderDetail[]
-  qrCode           String?
-  status           ProductionBatchStatus
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
-}
-
-model Claim {
-  id            Int             @id @default(autoincrement())
-  orderDetail   OrderDetail     @relation(fields: [orderDetailId], references: [id])
-  orderDetailId Int
-  order         Order           @relation(fields: [orderId], references: [id])
-  orderId       Int
-  client        Client          @relation(fields: [clientId], references: [id])
-  clientId      Int
-  clientName    String
-  reason        String
-  status        ClaimStatus
-  resolution    String?
-  createdAt     DateTime        @default(now())
-}
+// Aquí puedes empezar a definir tus modelos de datos.
+// Por ejemplo:
+//
+// model User {
+//   id    Int     @id @default(autoincrement())
+//   email String  @unique
+//   name  String?
+// }

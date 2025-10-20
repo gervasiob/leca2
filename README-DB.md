@@ -1,62 +1,34 @@
-# Base de datos (Prisma + PostgreSQL)
+# Base de datos (Supabase + PostgreSQL)
 
-Guía para correr migraciones y seeders, tanto en local como en nube.
+Guía para trabajar con tu base de datos de Supabase.
 
-## Prerrequisitos
-- Node y npm instalados.
-- Dependencias del proyecto instaladas: `npm i`.
-- Variable `DATABASE_URL` definida en `.env` (ejemplo):
-  - `postgresql://postgres:<PASSWORD>@<HOST>:5432/<DB>?schema=public`
-- Si tu contraseña tiene caracteres especiales (`@ # ? < >`), usa percent-encoding. Ejemplo ya aplicado:
-  - `postgresql://postgres:mJ6Bj%3FVv%23%3CUH%297M%40@34.29.26.213:5432/lecatexdb?schema=public`
-- En bases remotas administradas (Neon/Render/Cloud SQL), agrega `&sslmode=require` si el proveedor exige TLS.
+## Conexión
 
-## Migraciones (desarrollo/local)
-1) Verificar/editar el esquema en `prisma/schema.prisma`.
-2) Generar el cliente (opcional si ya se generó):
-   - `npx prisma generate`
-3) Aplicar la migración en la base configurada en `.env`:
-   - `npx prisma migrate dev --name init`
+La conexión a Supabase se configura en `src/lib/supabase.ts`, utilizando las variables de entorno `SUPABASE_URL` y `SUPABASE_KEY` definidas en tu archivo `.env`.
 
-## Migraciones (producción/nube)
-- Para desplegar cambios de schema sin crear nuevas migraciones:
-  - `npx prisma migrate deploy`
-- Asegúrate de tener `DATABASE_URL` apuntando a la base en la nube y, si corresponde, `sslmode=require`.
+El cliente de Supabase está disponible para ser importado en toda la aplicación desde `@/lib/supabase`.
 
-## Seeders (carga de datos iniciales)
-- Este proyecto define el seed en `prisma/seed.ts` y lo registra en `prisma.config.ts` (en `migrations.seed`).
-- Ejecuta el seed:
-  - `npx prisma db seed`
-- ¿Qué hace el seed?
-  - Carga `Role`, `User`, `Client`, `Product`, `Order`, `ProductionBatch`, `OrderDetail`, `Claim` desde `src/lib/data.ts`.
-  - Si existen `OrderDetail` con `orderId` sin orden padre, crea órdenes faltantes automáticamente.
-  - Usa `Decimal(10,2)` para importes (evita problemas de redondeo).
+## Estructura de la Base de Datos
+
+Puedes gestionar el esquema de tu base de datos, las tablas y los datos directamente desde el [Dashboard de Supabase](https://app.supabase.com).
+
+1.  **Ve a tu proyecto** en Supabase.
+2.  Usa el **Editor de Tablas** (`Table Editor`) para crear y modificar tablas.
+3.  Usa el **Editor de SQL** (`SQL Editor`) para ejecutar migraciones o scripts de `seed`.
+
+## Migraciones y Seeds
+
+A diferencia de Prisma, Supabase no tiene un sistema de migraciones basado en archivos por defecto en el lado del cliente. Las migraciones se gestionan principalmente a través de su Dashboard o usando la [Supabase CLI](https://supabase.com/docs/guides/cli).
+
+### Para cargar datos iniciales (seed):
+
+1.  Navega al **SQL Editor** en tu proyecto de Supabase.
+2.  Pega y ejecuta tus sentencias `INSERT` para poblar las tablas.
+
+Puedes adaptar los datos que se encontraban en `src/lib/data.ts` para crear tus scripts de `seed`.
 
 ## Verificación
+
 - Ejecuta el servidor de desarrollo:
   - `npm run dev` (puerto `9002`)
-- Comprueba la salud de la conexión:
-  - `http://localhost:9002/api/db` → debería responder `{ ok: true, now: ... }`.
-- Inspecciona los datos con Prisma Studio:
-  - `npx prisma studio`
-
-## Cuando lo tengas en la nube
-- Asegura accesibilidad: IP pública habilitada o usa un proxy/connector (Cloud SQL Proxy, etc.).
-- Actualiza `DATABASE_URL` con host, base y credenciales reales, y añade `&sslmode=require` si el proveedor lo pide.
-- Aplica migraciones en el entorno remoto:
-  - `npx prisma migrate deploy`
-- Ejecuta el seed (si querés datos iniciales en producción):
-  - `npx prisma db seed` (idealmente como job/tarea única post-deploy).
-
-## Problemas comunes
-- `P2003 Foreign key constraint violated`: faltan registros padre (el seed ya crea órdenes faltantes; si ocurre en otra tabla, revisa el orden de inserción).
-- Contraseña con caracteres especiales: percent-encode en la `DATABASE_URL`.
-- SSL/TLS requerido: añade `&sslmode=require`.
-- Actualización: el seed se configura en `prisma.config.ts` (Prisma 6+), ya no en `package.json#prisma`.
-
-## Comandos rápidos
-- `npx prisma generate`
-- `npx prisma migrate dev --name init`
-- `npx prisma migrate deploy`
-- `npx prisma db seed`
-- `npx prisma studio`
+- Comprueba la salud de la aplicación. Las páginas que usan datos ahora deberían obtenerlos de Supabase.

@@ -9,7 +9,7 @@ Guía para correr migraciones y seeders, tanto en local como en nube.
   - `postgresql://postgres:<PASSWORD>@<HOST>:5432/<DB>?schema=public`
 - Si tu contraseña tiene caracteres especiales (`@ # ? < >`), usa percent-encoding. Ejemplo ya aplicado:
   - `postgresql://postgres:mJ6Bj%3FVv%23%3CUH%297M%40@34.29.26.213:5432/lecatexdb?schema=public`
-- En bases remotas administradas (Neon/Render/Cloud SQL/Supabase), agrega `&sslmode=require` si el proveedor exige TLS.
+- **IMPORTANTE:** En bases remotas administradas (Neon/Render/Cloud SQL/Supabase), agrega `&sslmode=require` al final de la URL. Supabase lo requiere obligatoriamente para conexiones externas.
 
 ## Migraciones (desarrollo/local)
 1) Verificar/editar el esquema en `prisma/schema.prisma`.
@@ -21,10 +21,10 @@ Guía para correr migraciones y seeders, tanto en local como en nube.
 ## Migraciones (producción/nube)
 - Para desplegar cambios de schema sin crear nuevas migraciones:
   - `npx prisma migrate deploy`
-- Asegúrate de tener `DATABASE_URL` apuntando a la base en la nube y, si corresponde, `sslmode=require`.
+- Asegúrate de tener `DATABASE_URL` apuntando a la base en la nube y que incluya `&sslmode=require`.
 
 ## Seeders (carga de datos iniciales)
-- Este proyecto define el seed en `prisma/seed.ts` y lo registra en `prisma.config.ts` (en `migrations.seed`).
+- Este proyecto define el seed en `prisma/seed.ts`.
 - Ejecuta el seed:
   - `npx prisma db seed`
 - ¿Qué hace el seed?
@@ -42,17 +42,16 @@ Guía para correr migraciones y seeders, tanto en local como en nube.
 
 ## Cuando lo tengas en la nube
 - Asegura accesibilidad: IP pública habilitada o usa un proxy/connector (Cloud SQL Proxy, etc.).
-- Actualiza `DATABASE_URL` con host, base y credenciales reales, y añade `&sslmode=require` si el proveedor lo pide.
+- Actualiza `DATABASE_URL` con host, base y credenciales reales, y **añade `&sslmode=require`**.
 - Aplica migraciones en el entorno remoto:
   - `npx prisma migrate deploy`
 - Ejecuta el seed (si querés datos iniciales en producción):
   - `npx prisma db seed` (idealmente como job/tarea única post-deploy).
 
 ## Problemas comunes
+- **Error de OpenSSL/SSL**: Asegúrate de que `&sslmode=require` esté al final de tu `DATABASE_URL` en `.env`.
 - `P2003 Foreign key constraint violated`: faltan registros padre (el seed ya crea órdenes faltantes; si ocurre en otra tabla, revisa el orden de inserción).
 - Contraseña con caracteres especiales: percent-encode en la `DATABASE_URL`.
-- SSL/TLS requerido: añade `&sslmode=require`.
-- Actualización: el seed se configura en `prisma.config.ts` (Prisma 6+), ya no en `package.json#prisma`.
 
 ## Comandos rápidos
 - `npx prisma generate`

@@ -13,7 +13,7 @@ Guía para conectar Prisma a tu base de datos PostgreSQL alojada en Supabase.
     *   Abre el archivo `.env` en la raíz de tu proyecto.
     *   Pega la cadena de conexión como el valor de `DATABASE_URL`.
     *   Reemplaza `[YOUR-PASSWORD]` con la contraseña de tu base de datos de Supabase.
-    *   Asegúrate de que la URL incluya `&sslmode=require` al final, ya que Supabase lo necesita para conexiones externas.
+    *   **MUY IMPORTANTE:** Asegúrate de que la URL incluya `&sslmode=require` al final. Supabase lo necesita para todas las conexiones externas y su ausencia causa errores de OpenSSL con Prisma.
 
     **Ejemplo en `.env`:**
     ```
@@ -22,7 +22,7 @@ Guía para conectar Prisma a tu base de datos PostgreSQL alojada en Supabase.
 
 ## Migraciones con Prisma
 
-Una vez que tu `DATABASE_URL` está configurada, puedes usar los comandos de Prisma para gestionar el esquema de tu base de datos en Supabase.
+Una vez que tu `DATABASE_URL` está configurada correctamente (incluyendo `sslmode=require`), puedes usar los comandos de Prisma para gestionar el esquema de tu base de datos en Supabase.
 
 1.  **Modifica tu esquema:** Edita el archivo `prisma/schema.prisma` para definir tus modelos de datos.
 

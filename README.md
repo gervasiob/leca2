@@ -10,7 +10,7 @@ Aplicación de gestión integral para una fábrica, construida con Next.js, Tail
 - **Estilos:** Tailwind CSS
 - **Componentes UI:** ShadCN UI
 - **IA Generativa:** Google AI a través de Genkit
-- **Autenticación:** Firebase Authentication (próximamente)
+- **Autenticación:** Firebase Authentication
 
 ## Configuración del Proyecto
 
@@ -20,13 +20,11 @@ Aplicación de gestión integral para una fábrica, construida con Next.js, Tail
     ```
 
 2.  **Configurar variables de entorno:**
-    -   Crea un archivo `.env` en la raíz del proyecto.
-    -   Añade las credenciales de tu proyecto de Firebase. Puedes encontrarlas en la configuración de tu proyecto en la [consola de Firebase](https://console.firebase.google.com/).
+    -   Crea un archivo `.env` en la raíz del proyecto si no existe.
+    -   Añade las credenciales de tu proyecto de Firebase y de Google AI.
 
     ```env
     # Firebase
-    # Pega aquí la configuración del SDK web de tu proyecto de Firebase.
-    # La encontrarás en la Consola de Firebase > Configuración del proyecto > Tus apps > Configuración del SDK.
     NEXT_PUBLIC_FIREBASE_API_KEY="AIza..."
     NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="tu-proyecto.firebaseapp.com"
     NEXT_PUBLIC_FIREBASE_PROJECT_ID="tu-proyecto"
@@ -38,7 +36,15 @@ Aplicación de gestión integral para una fábrica, construida con Next.js, Tail
     GEMINI_API_KEY="..."
     ```
 
-3.  **Ejecutar el servidor de desarrollo:**
+3.  **¿Cómo obtener las credenciales de Firebase?**
+    1.  Abre la [Consola de Firebase](https://console.firebase.google.com/) y selecciona tu proyecto.
+    2.  Haz clic en el ícono de engranaje (⚙️) junto a "Project Overview" y ve a **"Project settings"**.
+    3.  En la pestaña "General", ve a la sección "Your apps".
+    4.  Si no tienes una app web, créala haciendo clic en el ícono `</>`.
+    5.  En la configuración de tu app web, busca la sección "Firebase SDK snippet" y selecciona la opción **"Config"**.
+    6.  Copia los valores que aparecen y pégalos en tu archivo `.env`.
+
+4.  **Ejecutar el servidor de desarrollo:**
     ```bash
     npm run dev
     ```

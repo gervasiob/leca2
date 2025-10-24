@@ -1,14 +1,141 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client-js",
+  binaryTargets = ["native", "linux-musl", "linux-openssl-3.0.x"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model Role {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  permissions String[]
+  users       User[]
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(Invitado)
+  roleId       Int?
+  lastLogin    DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  roleRel      Role?    @relation(fields: [roleId], references: [id])
+  orders       Order[]
+}
+
+model Client {
+  id                 Int      @id @default(autoincrement())
+  name               String
+  cuit               String   @unique
+  address            String
+  phone              String
+  email              String   @unique
+  discountLevel      Int
+  canEditPrices      Boolean
+  commissionFee      Float
+  sellsOnInstallments Boolean
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  orders             Order[]
+  orderDetails       OrderDetail[]
+}
+
+model Product {
+  id          Int           @id @default(autoincrement())
+  name        String
+  type        String
+  application String
+  colors      Json
+  status      String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  orderDetails OrderDetail[]
+}
+
+model Order {
+  id          Int         @id @default(autoincrement())
+  userId      Int
+  clientId    Int
+  status      String
+  totalAmount Decimal
+  orderDate   DateTime
+  isPartial   Boolean
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  user        User        @relation(fields: [userId], references: [id])
+  client      Client      @relation(fields: [clientId], references: [id])
+  details     OrderDetail[]
+  claims      Claim[]
+}
+
+model ProductionBatch {
+  id             Int        @id @default(autoincrement())
+  batchNumber    String     @unique
+  productionDate DateTime
+  plannedDate    DateTime
+  expeditionDate DateTime?
+  sentToClientDate DateTime?
+  qrCode         String?
+  status         String
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  items          OrderDetail[]
+}
+
+model OrderDetail {
+  id                Int       @id @default(autoincrement())
+  productId         Int
+  quantity          Int
+  unitPrice         Decimal
+  totalPrice        Decimal
+  orderId           Int
+  clientId          Int
+  cartId            String?
+  paymentId         Int?
+  deliveryNoteId    Int?
+  batchId           Int?
+  status            String
+  isProduced        Boolean   @default(false)
+  productionDate    DateTime?
+  productionDoneDate DateTime?
+  dispatchReadyDate DateTime?
+  dispatchedDate    DateTime?
+  deliveryNoteDate  DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  order   Order    @relation(fields: [orderId], references: [id])
+  product Product  @relation(fields: [productId], references: [id])
+  client  Client   @relation(fields: [clientId], references: [id])
+  batch   ProductionBatch? @relation(fields: [batchId], references: [id])
+  claims  Claim[]
+}
+
+model Claim {
+  id            Int      @id @default(autoincrement())
+  orderDetailId Int
+  orderId       Int
+  clientId      Int
+  reason        String
+  status        String
+  resolution    String?
+  createdAt     DateTime @default(now())
+  orderDetail   OrderDetail @relation(fields: [orderDetailId], references: [id])
+  order         Order       @relation(fields: [orderId], references: [id])
+}
+
+enum UserRole {
+  Admin
+  Sales
+  Production
+  Invitado
 }

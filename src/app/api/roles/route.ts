@@ -8,7 +8,7 @@ export async function GET() {
     const roleSnapshot = await getDocs(rolesCol);
     const roles = roleSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     // Firestore no garantiza el orden, así que lo ordenamos aquí si es necesario.
-    roles.sort((a, b) => a.id - b.id);
+    roles.sort((a, b) => (a.id as number) - (b.id as number));
     return NextResponse.json({ ok: true, roles }, { status: 200 });
   } catch (e: any) {
     const message = e instanceof Error ? e.message : 'Error desconocido';

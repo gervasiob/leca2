@@ -1,7 +1,23 @@
 
 /**
- * Populates Firebase Firestore with initial data from src/lib/data.ts.
+ * Populates the Firebase Firestore database with initial data.
+ *
+ * This seeder script connects to the database using the Firebase client
+ * and performs the following actions:
+ * 1.  Upserts roles from `src/lib/data.ts`, creating or updating them based on their IDs.
+ * 2.  Upserts users, hashing their passwords for security. It links them to their corresponding roles.
+ * 3.  Upserts clients, products, orders, order details, production batches, and claims.
+ *
+ * The script uses Batched Writes to efficiently upload data and avoid hitting API rate limits.
+ * It's designed to be executed via the `npm run db:seed` command.
  */
+import {
+  collection,
+  doc,
+  writeBatch,
+  Timestamp,
+} from 'firebase/firestore';
+import { db } from '../src/lib/firebase.js'; // Use .js extension for ES modules
 import {
   roles,
   users,
@@ -9,30 +25,70 @@ import {
   products,
   orders,
   orderDetails,
-  claims,
   productionBatches,
-} from '../src/lib/data.ts';
-import { db } from '../src/lib/firebase.ts';
-import {
-  collection,
-  doc,
-  setDoc,
-  writeBatch,
-  Timestamp,
-} from 'firebase/firestore';
+  claims,
+} from '../src/lib/data.js'; // Use .js extension for ES modules
 import bcrypt from 'bcryptjs';
-import { UserRole } from '../src/lib/types.ts';
 
-const passwordForRole = (
-  role: 'Admin' | 'Sales' | 'Production' | 'Invitado'
-) =>
-  role === 'Admin'
+const passwordForRole = (role) => {
+  return role === 'Admin'
     ? 'admin'
     : role === 'Sales'
     ? 'ventas'
     : role === 'Production'
     ? 'produccion'
     : 'invitado';
+};
+
+// Helper to commit batches in chunks of 499 (Firestore limit is 500)
+const commitBatchInChunks = async (collectionName, data) => {
+    console.log(`Seeding ${collectionName}...`);
+    let batch = writeBatch(db);
+    let count = 0;
+    const totalItems = data.length;
+
+    for (let i = 0; i < totalItems; i++) {
+        const item = data[i];
+        const docId = item.id.toString(); // Ensure ID is a string
+        const docRef = doc(db, collectionName, docId);
+        
+        // Create a new object to avoid modifying the original data from the import
+        const itemData = { ...item };
+        delete itemData.id; // Don't store the ID as a field in the document
+
+        // Convert date strings/objects to Firestore Timestamps
+        for (const key in itemData) {
+            if (Object.prototype.hasOwnProperty.call(itemData, key)) {
+                const value = itemData[key];
+                if (value instanceof Date) {
+                    itemData[key] = Timestamp.fromDate(value);
+                } else if (typeof value === 'string' && !isNaN(Date.parse(value))) {
+                    const parsedDate = new Date(value);
+                    if (!isNaN(parsedDate.getTime())) {
+                        // Check if it's a valid date string before converting
+                         if (key === 'orderDate' || key === 'lastLogin' || key.includes('Date')) {
+                            itemData[key] = Timestamp.fromDate(parsedDate);
+                         }
+                    }
+                }
+            }
+        }
+        
+        batch.set(docRef, itemData);
+        count++;
+
+        if (count === 499 || i === totalItems - 1) {
+            await batch.commit();
+            console.log(`  ...committed ${count} documents to ${collectionName}.`);
+            if (i < totalItems - 1) {
+                batch = writeBatch(db); // Start a new batch
+                count = 0;
+            }
+        }
+    }
+    console.log(`${collectionName} seeded successfully.`);
+};
+
 
 async function main() {
   console.log('Start seeding Firebase...');
@@ -40,20 +96,18 @@ async function main() {
   // 1. Seed Roles
   const rolesBatch = writeBatch(db);
   roles.forEach((role) => {
-    // Firestore auto-generates IDs, but if you want to keep your numeric ones, you must set them as strings.
     const roleRef = doc(db, 'roles', role.id.toString());
     rolesBatch.set(roleRef, { name: role.name, permissions: role.permissions });
   });
   await rolesBatch.commit();
   console.log('Roles seeded.');
 
-  // 2. Seed Users
+  // 2. Seed Users - Let Firestore auto-generate IDs for users
   const usersBatch = writeBatch(db);
   for (const user of users) {
-    const password = passwordForRole(user.role as any);
+    const password = passwordForRole(user.role);
     const passwordHash = await bcrypt.hash(password, 10);
-    // Let Firestore generate user IDs
-    const userRef = doc(collection(db, 'users')); 
+    const userRef = doc(collection(db, 'users')); // Auto-generate ID
     usersBatch.set(userRef, {
       name: user.name,
       email: user.email,
@@ -65,68 +119,18 @@ async function main() {
   await usersBatch.commit();
   console.log('Users seeded.');
   
-  // Helper to commit batches in chunks of 500
-  const commitBatchInChunks = async (collectionName, data) => {
-    let batch = writeBatch(db);
-    let count = 0;
-    for (const item of data) {
-      const { id, ...itemData } = item;
-      const docRef = doc(db, collectionName, id.toString());
-
-      // Convert date strings/objects to Timestamps
-      for (const key in itemData) {
-        if (Object.prototype.hasOwnProperty.call(itemData, key)) {
-          // Check for date-like names or if it's a Date object
-          if (itemData[key] instanceof Date || (typeof itemData[key] === 'string' && itemData[key].match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/))) {
-             itemData[key] = Timestamp.fromDate(new Date(itemData[key]));
-          }
-        }
-      }
-
-      batch.set(docRef, itemData);
-      count++;
-      if (count === 499) { // Firestore batch limit is 500 writes
-        await batch.commit();
-        batch = writeBatch(db);
-        count = 0;
-      }
-    }
-    if (count > 0) {
-      await batch.commit();
-    }
-    console.log(`${collectionName} seeded.`);
-  }
-
-  // 3. Seed Clients
+  // 3. Seed other collections
   await commitBatchInChunks('clients', clients);
-
-  // 4. Seed Products
   await commitBatchInChunks('products', products);
-
-  // 5. Seed Orders
   await commitBatchInChunks('orders', orders);
-
-  // 6. Seed OrderDetails
-  await commitBatchInChunks('orderDetails', orderDetails.map(od => {
-    const {isProduced, ...rest} = od; // Remove isProduced if it's not in the target schema
-    return rest;
-  }));
-
-  // 7. Seed ProductionBatches
-  await commitBatchInChunks('productionBatches', productionBatches.map(pb => {
-      return {
-          ...pb,
-          items: pb.items.map(item => item.id) // store only item IDs
-      }
-  }));
-
-  // 8. Seed Claims
+  await commitBatchInChunks('orderDetails', orderDetails);
+  await commitBatchInChunks('productionBatches', productionBatches);
   await commitBatchInChunks('claims', claims);
 
   console.log('Seeding finished.');
 }
 
 main().catch((e) => {
-  console.error(e);
+  console.error('Seeding failed:', e);
   process.exit(1);
 });

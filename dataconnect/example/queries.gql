@@ -1,0 +1,24 @@
+mutation AddMovieToMovieList($movieListId: UUID!, $movieId: UUID!, $position: Int!) @auth(level: USER) {
+  movieListEntry_insert(data: {movieListId: $movieListId, movieId: $movieId, position: $position})
+}
+
+query GetPublicMovieLists @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  movieLists(where: {isPublic: {eq: true}}) {
+    id
+    name
+    description
+  }
+}
+
+mutation CreateUser($displayName: String!, $email: String) @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  user_insert(data: {displayName: $displayName, email: $email})
+}
+
+query GetMoviesByGenre($genre: String!) @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  movies(where: {genres: {includes: $genre}}) {
+    id
+    title
+    summary
+    year
+  }
+}

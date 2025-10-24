@@ -1,60 +1,59 @@
-# Base de datos (Prisma + PostgreSQL)
+# Gestor de Fábrica - Next.js y Firebase
 
-Guía para correr migraciones y seeders, tanto en local como en nube.
+Aplicación de gestión integral para una fábrica, construida con Next.js, Tailwind CSS, ShadCN UI y Firebase.
 
-## **IMPORTANTE: Solución al error de OpenSSL**
-Si al ejecutar comandos de Prisma (como `migrate` o `db seed`) ves un error relacionado con `OpenSSL` o `libssl`, la solución casi siempre es la misma:
+## Stack Tecnológico
 
-**Asegúrate de que tu `DATABASE_URL` en el archivo `.env` termine con `&sslmode=require`.**
+- **Framework:** Next.js (App Router)
+- **Lenguaje:** TypeScript
+- **Base de Datos:** Firebase Firestore
+- **Estilos:** Tailwind CSS
+- **Componentes UI:** ShadCN UI
+- **IA Generativa:** Google AI a través de Genkit
+- **Autenticación:** Firebase Authentication (próximamente)
 
-Las bases de datos en la nube como Supabase, Neon o Render requieren este parámetro para conexiones seguras. Su ausencia es la causa más común de este error.
+## Configuración del Proyecto
 
-**Ejemplo de URL correcta:**
-`postgresql://postgres:tu-contraseña@db.host.supabase.co:5432/postgres?schema=public&sslmode=require`
+1.  **Instalar dependencias:**
+    ```bash
+    npm install
+    ```
 
----
+2.  **Configurar variables de entorno:**
+    -   Crea un archivo `.env.local` en la raíz del proyecto.
+    -   Añade las credenciales de tu proyecto de Firebase. Puedes encontrarlas en la configuración de tu proyecto en la [consola de Firebase](https://console.firebase.google.com/).
 
-## Prerrequisitos
-- Node y npm instalados.
-- Dependencias del proyecto instaladas: `npm i`.
-- Variable `DATABASE_URL` definida en `.env`.
-- Si tu contraseña tiene caracteres especiales (`@ # ? < >`), usa percent-encoding.
+    ```env
+    # Firebase
+    NEXT_PUBLIC_FIREBASE_API_KEY="AIza..."
+    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="tu-proyecto.firebaseapp.com"
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID="tu-proyecto"
+    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="tu-proyecto.appspot.com"
+    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="..."
+    NEXT_PUBLIC_FIREBASE_APP_ID="1:..."
 
-## Migraciones (desarrollo/local)
-1) Verificar/editar el esquema en `prisma/schema.prisma`.
-2) Generar el cliente (opcional si ya se generó):
-   - `npx prisma generate`
-3) Aplicar la migración en la base configurada en `.env`:
-   - `npx prisma migrate dev --name init`
+    # Google AI (Genkit)
+    GEMINI_API_KEY="..."
+    ```
 
-## Migraciones (producción/nube)
-- Para desplegar cambios de schema sin crear nuevas migraciones:
-  - `npx prisma migrate deploy`
-- Asegúrate de tener `DATABASE_URL` apuntando a la base en la nube y que **incluya `&sslmode=require`**.
+3.  **Ejecutar el servidor de desarrollo:**
+    ```bash
+    npm run dev
+    ```
+    La aplicación estará disponible en `http://localhost:9002`.
 
-## Seeders (carga de datos iniciales)
-- Este proyecto define el seed en `prisma/seed.ts`.
-- Ejecuta el seed:
-  - `npx prisma db seed`
-- ¿Qué hace el seed?
-  - Carga datos iniciales para `Role`, `User`, `Client`, `Product`, `Order`, `ProductionBatch`, `OrderDetail`, `Claim` desde `src/lib/data.ts`.
+## Estructura del Proyecto
 
-## Verificación
-- Ejecuta el servidor de desarrollo:
-  - `npm run dev` (puerto `9002`)
-- Comprueba la salud de la conexión:
-  - `http://localhost:9002/api/db` → debería responder `{ ok: true, now: ... }`.
-- Inspecciona los datos con Prisma Studio:
-  - `npx prisma studio`
+-   `src/app`: Contiene las rutas y páginas de la aplicación (App Router).
+-   `src/components`: Componentes de React reutilizables.
+-   `src/lib`: Utilidades, configuración de clientes (Firebase) y tipos.
+-   `src/ai`: Flujos y configuración de Genkit para funcionalidades de IA.
+-   `src/styles`: Archivos de estilos globales.
 
-## Problemas comunes
-- **Error de OpenSSL/SSL**: ¡Revisa que `&sslmode=require` esté al final de tu `DATABASE_URL`!
-- `P2003 Foreign key constraint violated`: faltan registros padre. Revisa el orden de inserción en el seed.
-- Contraseña con caracteres especiales: debe estar codificada (percent-encoding) en la `DATABASE_URL`.
+## Funcionalidades Principales
 
-## Comandos rápidos
-- `npx prisma generate`
-- `npx prisma migrate dev --name init`
-- `npx prisma migrate deploy`
-- `npx prisma db seed`
-- `npx prisma studio`
+-   **Tablero de Control:** Resumen visual de métricas clave.
+-   **Gestión de Ventas:** Creación y seguimiento de pedidos y clientes.
+-   **Planificación de Producción:** Organización de la producción en lotes.
+-   **Gestión de Despachos:** Generación de remitos.
+-   **Roles y Permisos:** Control de acceso granular para diferentes tipos de usuario.

@@ -1,63 +1,55 @@
-# Base de datos (Prisma + Supabase/PostgreSQL)
+# Base de Datos (Firebase Firestore)
 
-Guía para conectar Prisma a tu base de datos PostgreSQL alojada en Supabase.
+Este proyecto utiliza **Firebase Firestore** como su base de datos principal para la persistencia de datos. Firestore es una base de datos NoSQL, flexible y escalable para el desarrollo móvil, web y de servidores de Firebase y Google Cloud.
 
-## Conexión
+## Configuración
 
-1.  **Obtén la cadena de conexión de Supabase:**
-    *   Ve a tu proyecto en [Supabase](https://app.supabase.com).
-    *   Navega a `Project Settings` (el ícono de engranaje) > `Database`.
-    *   En la sección `Connection string`, copia la URL que corresponde al modo `Transaction` (puerto `5432`).
+La configuración del cliente de Firebase se encuentra en `src/lib/firebase.ts`. Este archivo inicializa la aplicación de Firebase utilizando las variables de entorno de tu proyecto de Firebase.
 
-2.  **Configura la variable de entorno:**
-    *   Abre el archivo `.env` en la raíz de tu proyecto.
-    *   Pega la cadena de conexión como el valor de `DATABASE_URL`.
-    *   Reemplaza `[YOUR-PASSWORD]` con la contraseña de tu base de datos de Supabase.
-    *   **MUY IMPORTANTE:** Asegúrate de que la URL incluya `&sslmode=require` al final. Supabase lo necesita para todas las conexiones externas y su ausencia causa errores de OpenSSL con Prisma.
+Asegúrate de que tu archivo `.env.local` (o las variables de entorno de tu entorno de despliegue) contenga las siguientes claves obtenidas desde la consola de Firebase:
 
-    **Ejemplo en `.env`:**
-    ```
-    DATABASE_URL="postgresql://postgres:tu-contraseña-aqui@db.xxxxxxxx.supabase.co:5432/postgres?schema=public&sslmode=require"
-    ```
+```
+NEXT_PUBLIC_FIREBASE_API_KEY="AIza..."
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="tu-proyecto.firebaseapp.com"
+NEXT_PUBLIC_FIREBASE_PROJECT_ID="tu-proyecto"
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="tu-proyecto.appspot.com"
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="..."
+NEXT_PUBLIC_FIREBASE_APP_ID="1:..."
+```
 
-## Migraciones con Prisma
+## Estructura de Datos
 
-Una vez que tu `DATABASE_URL` está configurada correctamente (incluyendo `sslmode=require`), puedes usar los comandos de Prisma para gestionar el esquema de tu base de datos en Supabase.
+Al ser una base de datos NoSQL, Firestore organiza los datos en **colecciones** y **documentos**. Las principales colecciones para esta aplicación son:
 
-1.  **Modifica tu esquema:** Edita el archivo `prisma/schema.prisma` para definir tus modelos de datos.
+- `users`
+- `roles`
+- `clients`
+- `products`
+- `orders`
+- `claims`
 
-2.  **Genera el cliente de Prisma:**
-    ```bash
-    npx prisma generate
-    ```
+Cada documento dentro de estas colecciones representa un registro individual.
 
-3.  **Aplica las migraciones:** Para crear o actualizar las tablas en tu base de datos de Supabase, ejecuta:
-    ```bash
-    npx prisma migrate dev --name "nombre-descriptivo-de-la-migracion"
-    ```
+## Interactuando con la Base de Datos
 
-    Si estás desplegando en un entorno de producción, usa:
-    ```bash
-    npx prisma migrate deploy
-    ```
+Para interactuar con Firestore, puedes importar el cliente `db` desde `src/lib/firebase.ts` y usar las funciones del SDK de Firebase v9+ (API modular) para realizar operaciones CRUD (Crear, Leer, Actualizar, Eliminar).
 
-## Carga de datos iniciales (Seeding)
+**Ejemplo de lectura de documentos:**
+```typescript
+import { db } from '@/lib/firebase';
+import { collection, getDocs } from 'firebase/firestore';
 
-Puedes usar el seeder de Prisma para poblar tu base de datos en Supabase.
+async function getClients() {
+  const clientsCol = collection(db, 'clients');
+  const clientSnapshot = await getDocs(clientsCol);
+  const clientList = clientSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  return clientList;
+}
+```
 
-1.  **Define tus datos:** Edita el archivo `prisma/seed.ts`.
-2.  **Ejecuta el seeder:**
-    ```bash
-    npx prisma db seed
-    ```
+## Ventajas de Usar Firestore
 
-## Verificación
-
-- **Prisma Studio:** Para inspeccionar tu base de datos de Supabase a través de una interfaz gráfica, usa:
-  ```bash
-  npx prisma studio
-  ```
-- **Servidor de desarrollo:** Inicia la aplicación y comprueba que las páginas que obtienen datos funcionan correctamente.
-  ```bash
-  npm run dev
-  ```
+- **Escalabilidad:** Se escala automáticamente para satisfacer la demanda.
+- **Consultas en tiempo real:** Escucha los cambios de datos en tiempo real.
+- **Soporte sin conexión:** Ofrece soporte sin conexión para dispositivos móviles y web.
+- **Integración con Firebase:** Se integra a la perfección con otros servicios de Firebase como Authentication, Functions y Storage.

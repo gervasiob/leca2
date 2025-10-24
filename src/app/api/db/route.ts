@@ -1,15 +1,17 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
+import { db } from '@/lib/firebase';
+import { collection, getDocs } from 'firebase/firestore';
 
 export async function GET() {
   try {
-    const rows = await prisma.$queryRaw<{ now: Date }>(
-      Prisma.sql`SELECT NOW() as now`
-    );
-    return NextResponse.json({ ok: true, now: (rows as unknown as { now: Date }[])[0]?.now ?? null });
+    // Realiza una consulta simple para verificar la conexión, como listar colecciones.
+    // O intenta leer un documento conocido. Por simplicidad, asumimos que si no hay error, está ok.
+    const rolesCol = collection(db, 'roles');
+    await getDocs(rolesCol);
+
+    return NextResponse.json({ ok: true, now: new Date().toISOString() });
   } catch (e) {
-    const message = e instanceof Error ? e.message : 'Unknown error';
+    const message = e instanceof Error ? e.message : 'Unknown error connecting to Firestore';
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
 }

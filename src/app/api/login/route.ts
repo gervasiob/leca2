@@ -1,12 +1,7 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { db } from '@/lib/firebase';
+import { collection, query, where, getDocs, updateDoc, doc, Timestamp } from 'firebase/firestore';
 import bcrypt from 'bcryptjs';
-import { users } from '@/lib/data';
-
-const passwordForRole = (role: 'Admin' | 'Sales' | 'Production' | 'Invitado') =>
-  role === 'Admin' ? 'admin' :
-  role === 'Sales' ? 'ventas' :
-  role === 'Production' ? 'produccion' : 'invitado';
 
 export async function POST(request: Request) {
   try {
@@ -23,74 +18,51 @@ export async function POST(request: Request) {
       );
     }
 
-    // Intento con base de datos
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (user && user.passwordHash) {
-      const match = await bcrypt.compare(password, user.passwordHash);
-      if (!match) {
-        return NextResponse.json(
-          { ok: false, error: 'Credenciales inválidas' },
-          { status: 401 }
-        );
-      }
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('email', '==', email));
+    const querySnapshot = await getDocs(q);
 
-      await prisma.user.update({ where: { id: user.id }, data: { lastLogin: new Date() } });
-      const payload = { id: user.id, name: user.name, email: user.email, role: user.role };
-      const res = NextResponse.json({ ok: true, user: payload }, { status: 200 });
-      res.cookies.set('auth_user', JSON.stringify(payload), {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 7 * 24 * 60 * 60,
-      });
-      return res;
-    }
-
-    // Fallback: datos en memoria si no hay DB o el usuario no tiene hash
-    const demoUser = users.find((u) => u.email.toLowerCase() === email);
-    const expected = demoUser ? passwordForRole(demoUser.role) : undefined;
-    if (!demoUser || password !== expected) {
+    if (querySnapshot.empty) {
       return NextResponse.json(
         { ok: false, error: 'Credenciales inválidas' },
         { status: 401 }
       );
     }
 
-    const payload = { id: demoUser.id, name: demoUser.name, email: demoUser.email, role: demoUser.role };
-    const res = NextResponse.json({ ok: true, user: payload }, { status: 200 });
-    res.cookies.set('auth_user', JSON.stringify(payload), {
+    const userDoc = querySnapshot.docs[0];
+    const user = { id: userDoc.id, ...userDoc.data() };
+
+    const match = await bcrypt.compare(password, user.passwordHash);
+    if (!match) {
+      return NextResponse.json(
+        { ok: false, error: 'Credenciales inválidas' },
+        { status: 401 }
+      );
+    }
+
+    // Actualizar último inicio de sesión
+    const userRef = doc(db, 'users', user.id);
+    await updateDoc(userRef, { lastLogin: Timestamp.now() });
+
+    // Excluir passwordHash del payload
+    const { passwordHash, ...payload } = user;
+    const serializablePayload = {
+      ...payload,
+      lastLogin: user.lastLogin?.toDate?.().toISOString() || new Date().toISOString(),
+    }
+
+    const res = NextResponse.json({ ok: true, user: serializablePayload }, { status: 200 });
+    res.cookies.set('auth_user', JSON.stringify(serializablePayload), {
       httpOnly: true,
       sameSite: 'lax',
       path: '/',
       maxAge: 7 * 24 * 60 * 60,
     });
     return res;
+
   } catch (e: any) {
-    // Si Prisma falla (DB no disponible), intentar fallback con datos de demo
-    try {
-      const body = await request.json();
-      const emailRaw: string | undefined = body?.email?.toString();
-      const passwordRaw: string | undefined = body?.password?.toString();
-      const email = emailRaw ? emailRaw.trim().toLowerCase() : undefined;
-      const password = passwordRaw ? passwordRaw.trim() : undefined;
-      const demoUser = email ? users.find((u) => u.email.toLowerCase() === email) : undefined;
-      const expected = demoUser ? passwordForRole(demoUser.role) : undefined;
-      if (!demoUser || !password || password !== expected) {
-        const message = e instanceof Error ? e.message : 'Error desconocido';
-        return NextResponse.json({ ok: false, error: message }, { status: 500 });
-      }
-      const payload = { id: demoUser.id, name: demoUser.name, email: demoUser.email, role: demoUser.role };
-      const res = NextResponse.json({ ok: true, user: payload }, { status: 200 });
-      res.cookies.set('auth_user', JSON.stringify(payload), {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 7 * 24 * 60 * 60,
-      });
-      return res;
-    } catch {
-      const message = e instanceof Error ? e.message : 'Error desconocido';
-      return NextResponse.json({ ok: false, error: message }, { status: 500 });
-    }
+    const message = e instanceof Error ? e.message : 'Error desconocido';
+    console.error("Login error:", message);
+    return NextResponse.json({ ok: false, error: 'Error del servidor al intentar iniciar sesión.' }, { status: 500 });
   }
 }

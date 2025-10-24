@@ -11,7 +11,7 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "git": "node ./scripts/git-push.js",
-    "db:seed": "node --loader tsx scripts/seed-firestore.mjs"
+    "db:seed": "node --import tsx scripts/seed-firestore.mjs"
   },
   "dependencies": {
     "@genkit-ai/google-genai": "^1.20.0",

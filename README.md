@@ -20,11 +20,13 @@ Aplicación de gestión integral para una fábrica, construida con Next.js, Tail
     ```
 
 2.  **Configurar variables de entorno:**
-    -   Crea un archivo `.env.local` en la raíz del proyecto.
+    -   Crea un archivo `.env` en la raíz del proyecto.
     -   Añade las credenciales de tu proyecto de Firebase. Puedes encontrarlas en la configuración de tu proyecto en la [consola de Firebase](https://console.firebase.google.com/).
 
     ```env
     # Firebase
+    # Pega aquí la configuración del SDK web de tu proyecto de Firebase.
+    # La encontrarás en la Consola de Firebase > Configuración del proyecto > Tus apps > Configuración del SDK.
     NEXT_PUBLIC_FIREBASE_API_KEY="AIza..."
     NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="tu-proyecto.firebaseapp.com"
     NEXT_PUBLIC_FIREBASE_PROJECT_ID="tu-proyecto"

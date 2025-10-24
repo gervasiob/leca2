@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, addDoc, Timestamp } from 'firebase/firestore';
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
     const newUser = {
       name,
       email,
-      role: UserRole.Invitado,
+      role: UserRole.Invitado, // Asignar el rol directamente
       lastLogin: Timestamp.now(),
       passwordHash,
     };

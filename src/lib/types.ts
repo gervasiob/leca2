@@ -1,3 +1,4 @@
+
 // Enumeración para roles de usuario, para consistencia.
 export enum UserRole {
   Admin = 'Admin',
@@ -98,6 +99,7 @@ export interface User {
   role: UserRole;
   lastLogin: Date; // O usa Timestamp de Firestore
   passwordHash?: string; // El hash se almacena pero no se suele enviar al cliente
+  roleId?: number; // Hacemos roleId opcional
 }
 
 export interface Role {

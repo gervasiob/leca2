@@ -7,6 +7,7 @@ import { UserRole } from '@/lib/types';
 async function fetchUserPermissions(request: NextRequest): Promise<string[]> {
     try {
         const rolesUrl = new URL('/api/roles', request.nextUrl).toString();
+        // Las llamadas a API desde el middleware deben ser absolutas y manejar la autenticación
         const res = await fetch(rolesUrl, {
           headers: { cookie: request.headers.get('cookie') ?? '' },
         });
@@ -21,6 +22,7 @@ async function fetchUserPermissions(request: NextRequest): Promise<string[]> {
         
         if (!user?.role) return [];
 
+        // Mapear el rol del enum de la cookie (ej: "Sales") al nombre legible (ej: "Ventas")
         const roleName = ROLE_NAME_MAP[user.role as UserRole] ?? user.role;
         const normalizedRoleName = normalizeName(roleName);
         
@@ -41,39 +43,45 @@ export async function middleware(req: NextRequest) {
   const isLoggedIn = Boolean(cookies.get('auth_user')?.value);
 
   const publicPages = ['/login', '/register'];
-  const isPublicPage = publicPages.includes(pathname);
-  const isApiRoute = pathname.startsWith('/api');
+  const publicApiPrefixes = ['/api/login', '/api/register', '/api/logout', '/api/db'];
+  const isApiRoute = pathname.startsWith('/api/');
 
   // Ignorar assets y archivos estáticos
   if (pathname.startsWith('/_next/') || pathname.startsWith('/static/') || /\.(svg|png|jpg|jpeg|gif|ico|css|js)$/.test(pathname)) {
     return NextResponse.next();
   }
 
-  // Si el usuario está logueado
+  // Rutas de API públicas siempre permitidas
+  if (isApiRoute && publicApiPrefixes.some(p => pathname.startsWith(p))) {
+    return NextResponse.next();
+  }
+  
   if (isLoggedIn) {
-    // Si intenta acceder a login/register, redirigir a dashboard
-    if (isPublicPage) {
+    if (publicPages.includes(pathname)) {
       return NextResponse.redirect(new URL('/dashboard', nextUrl));
     }
     
-    // Si no es una ruta de API, verificar permisos
+    // Si no es una ruta de API, verificar permisos de pantalla
     if (!isApiRoute) {
       const allowedScreens = await fetchUserPermissions(req);
       if (!isPathAllowed(pathname, allowedScreens)) {
         if (pathname === '/dashboard') {
-            return NextResponse.next(); // Evitar bucle si no tiene acceso a dashboard
+            // Evita bucle si dashboard no está permitido, aunque debería estarlo para cualquier rol logueado.
+            return NextResponse.next();
         }
         return NextResponse.redirect(new URL('/dashboard', nextUrl));
       }
     }
-
-  // Si el usuario NO está logueado
   } else {
-    // Si la ruta no es pública ni es una API, redirigir a login
-    if (!isPublicPage && !isApiRoute) {
-        const loginUrl = new URL('/login', nextUrl);
-        loginUrl.searchParams.set('next', pathname + nextUrl.search);
-        return NextResponse.redirect(loginUrl);
+    // Si no está logueado y la ruta no es pública, redirigir a login
+    if (!publicPages.includes(pathname) && !isApiRoute) {
+      const loginUrl = new URL('/login', nextUrl);
+      loginUrl.searchParams.set('next', pathname + nextUrl.search);
+      return NextResponse.redirect(loginUrl);
+    }
+    // Si no está logueado y es una API no pública
+    if (isApiRoute) {
+        return NextResponse.json({ ok: false, error: 'No autenticado' }, { status: 401 });
     }
   }
 

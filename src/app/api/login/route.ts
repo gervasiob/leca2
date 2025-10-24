@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, updateDoc, doc, Timestamp } from 'firebase/firestore';
+import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
 export async function POST(request: Request) {
@@ -18,19 +17,16 @@ export async function POST(request: Request) {
       );
     }
 
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('email', '==', email));
-    const querySnapshot = await getDocs(q);
+    const user = await prisma.user.findUnique({
+        where: { email }
+    });
 
-    if (querySnapshot.empty) {
+    if (!user || !user.passwordHash) {
       return NextResponse.json(
         { ok: false, error: 'Credenciales inválidas' },
         { status: 401 }
       );
     }
-
-    const userDoc = querySnapshot.docs[0];
-    const user = { id: userDoc.id, ...userDoc.data() };
 
     const match = await bcrypt.compare(password, user.passwordHash);
     if (!match) {
@@ -40,15 +36,17 @@ export async function POST(request: Request) {
       );
     }
 
-    // Actualizar último inicio de sesión
-    const userRef = doc(db, 'users', user.id);
-    await updateDoc(userRef, { lastLogin: Timestamp.now() });
+    // Update last login
+    await prisma.user.update({
+        where: { id: user.id },
+        data: { lastLogin: new Date() }
+    });
 
-    // Excluir passwordHash del payload
+    // Exclude passwordHash from the payload
     const { passwordHash, ...payload } = user;
     const serializablePayload = {
       ...payload,
-      lastLogin: user.lastLogin?.toDate?.().toISOString() || new Date().toISOString(),
+      lastLogin: user.lastLogin?.toISOString() || new Date().toISOString(),
     }
 
     const res = NextResponse.json({ ok: true, user: serializablePayload }, { status: 200 });

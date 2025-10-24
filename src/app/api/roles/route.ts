@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, query, where } from 'firebase/firestore';
+import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    const rolesCol = collection(db, 'roles');
-    const roleSnapshot = await getDocs(rolesCol);
-    const roles = roleSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    // Firestore no garantiza el orden, así que lo ordenamos aquí si es necesario.
-    roles.sort((a, b) => (a.id as number) - (b.id as number));
+    const roles = await prisma.role.findMany({
+        orderBy: {
+            id: 'asc'
+        }
+    });
     return NextResponse.json({ ok: true, roles }, { status: 200 });
   } catch (e: any) {
     const message = e instanceof Error ? e.message : 'Error desconocido';
@@ -34,26 +33,22 @@ export async function POST(request: Request) {
       );
     }
     
-    // Verificar si el rol ya existe (case-insensitive no es directo en Firestore)
-    // Se normaliza al guardar y al consultar
-    const rolesRef = collection(db, 'roles');
-    const q = query(rolesRef, where('name', '==', name));
-    const querySnapshot = await getDocs(q);
+    const existingRole = await prisma.role.findFirst({
+        where: { name: { equals: name, mode: 'insensitive' } }
+    });
 
-    if (!querySnapshot.empty) {
+    if (existingRole) {
         return NextResponse.json({ ok: false, error: 'Ya existe un rol con ese nombre.' }, { status: 409 });
     }
 
-    const newRole = { name, permissions };
-    const docRef = await addDoc(rolesRef, newRole);
-
-    const role = { id: docRef.id, ...newRole };
+    const role = await prisma.role.create({
+        data: { name, permissions }
+    });
 
     return NextResponse.json({ ok: true, role }, { status: 201 });
   } catch (e: any) {
     let message = e instanceof Error ? e.message : 'Error desconocido';
-    let status = 500;
     console.error("Error creating role:", message);
-    return NextResponse.json({ ok: false, error: 'Error del servidor al crear el rol.' }, { status });
+    return NextResponse.json({ ok: false, error: 'Error del servidor al crear el rol.' }, { status: 500 });
   }
 }

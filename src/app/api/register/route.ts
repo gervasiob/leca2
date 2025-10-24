@@ -1,7 +1,5 @@
-
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, addDoc, Timestamp } from 'firebase/firestore';
+import { prisma } from '@/lib/prisma';
 import { UserRole } from '@/lib/types';
 import bcrypt from 'bcryptjs';
 
@@ -28,12 +26,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Verificar si el usuario ya existe
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('email', '==', email));
-    const querySnapshot = await getDocs(q);
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
 
-    if (!querySnapshot.empty) {
+    if (existingUser) {
       return NextResponse.json(
         { ok: false, message: 'El usuario ya existe. Por favor, contacte al administrador.' },
         { status: 409 }
@@ -41,18 +38,27 @@ export async function POST(request: Request) {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const newUser = {
-      name,
-      email,
-      role: UserRole.Invitado, // Asignar el rol directamente
-      lastLogin: Timestamp.now(),
-      passwordHash,
-    };
+    const invitadoRole = await prisma.role.findFirst({
+        where: { name: 'Invitado' }
+    });
 
-    const docRef = await addDoc(usersRef, newUser);
+    if (!invitadoRole) {
+        return NextResponse.json({ok: false, error: "El rol 'Invitado' no existe. Ejecute el seeder."}, {status: 500});
+    }
+
+    const newUser = await prisma.user.create({
+        data: {
+            name,
+            email,
+            role: UserRole.Invitado,
+            passwordHash,
+            roleId: invitadoRole.id,
+            lastLogin: new Date(),
+        }
+    });
     
     const userResponse = {
-      id: docRef.id,
+      id: newUser.id,
       name: newUser.name,
       email: newUser.email,
       role: newUser.role,

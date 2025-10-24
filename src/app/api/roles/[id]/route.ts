@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { prisma } from '@/lib/prisma';
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
-    const id = params.id;
-    if (!id) {
-      return NextResponse.json({ ok: false, error: 'ID de rol no proporcionado' }, { status: 400 });
+    const id = parseInt(params.id, 10);
+    if (isNaN(id)) {
+      return NextResponse.json({ ok: false, error: 'ID de rol inválido' }, { status: 400 });
     }
 
     const body = await request.json();
@@ -26,44 +25,34 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       return NextResponse.json({ ok: false, error: 'No hay cambios para actualizar' }, { status: 400 });
     }
 
-    const roleRef = doc(db, 'roles', id);
-    await updateDoc(roleRef, data);
-    
-    const updatedDoc = await getDoc(roleRef);
-    const role = { id: updatedDoc.id, ...updatedDoc.data() };
+    const role = await prisma.role.update({
+        where: { id },
+        data
+    });
 
     return NextResponse.json({ ok: true, role }, { status: 200 });
   } catch (e: any) {
     let message = e instanceof Error ? e.message : 'Error desconocido';
-    let status = 500;
-    if (e.code === 'not-found') {
-        status = 404;
-        message = 'Rol no encontrado';
-    }
     console.error(`Error updating role ${params.id}:`, message);
-    return NextResponse.json({ ok: false, error: message }, { status });
+    return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
 }
 
 export async function DELETE(_request: Request, { params }: { params: { id: string } }) {
   try {
-    const id = params.id;
-    if (!id) {
-      return NextResponse.json({ ok: false, error: 'ID de rol no proporcionado' }, { status: 400 });
+    const id = parseInt(params.id, 10);
+    if (isNaN(id)) {
+      return NextResponse.json({ ok: false, error: 'ID de rol inválido' }, { status: 400 });
     }
 
-    const roleRef = doc(db, 'roles', id);
-    await deleteDoc(roleRef);
+    await prisma.role.delete({
+        where: { id }
+    });
     
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (e: any) {
     let message = e instanceof Error ? e.message : 'Error desconocido';
-    let status = 500;
-    if (e.code === 'not-found') {
-        status = 404;
-        message = 'Rol no encontrado';
-    }
     console.error(`Error deleting role ${params.id}:`, message);
-    return NextResponse.json({ ok: false, error: message }, { status });
+    return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
 }

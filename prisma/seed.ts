@@ -78,7 +78,7 @@ async function main() {
       console.warn(`Role "${user.role}" not found for user "${user.name}". Skipping.`);
       continue;
     }
-    const password = passwordForRole(user.role);
+    const password = passwordForRole(user.role as 'Admin' | 'Sales' | 'Production' | 'Invitado');
     const passwordHash = await bcrypt.hash(password, 10);
 
     await prisma.user.upsert({
@@ -106,9 +106,9 @@ async function main() {
   // 3. Seed Clients
   for (const client of seedClients) {
     await prisma.client.upsert({
-      where: { id: client.id },
-      update: { ...client },
-      create: client,
+      where: { id: client.id.toString() },
+      update: { ...client, id: client.id.toString() },
+      create: { ...client, id: client.id.toString() },
     });
   }
   console.log('Clients seeded.');
@@ -116,17 +116,17 @@ async function main() {
   // 4. Seed Products
   for (const product of seedProducts) {
     await prisma.product.upsert({
-      where: { id: product.id },
-      update: { ...product },
-      create: product,
+      where: { id: product.id.toString() },
+      update: { ...product, id: product.id.toString() },
+      create: { ...product, id: product.id.toString() },
     });
   }
   console.log('Products seeded.');
 
   // 5. Seed Orders
   for (const order of seedOrders) {
-    const client = await prisma.client.findUnique({ where: { id: order.clientId } });
-    const user = await prisma.user.findUnique({ where: { id: order.userId } });
+    const client = await prisma.client.findUnique({ where: { id: order.clientId.toString() } });
+    const user = await prisma.user.findUnique({ where: { id: order.userId.toString() } });
 
     if (!client || !user) {
       console.warn(`Client or User not found for order ${order.id}. Skipping.`);
@@ -134,19 +134,19 @@ async function main() {
     }
 
     await prisma.order.upsert({
-      where: { id: order.id },
+      where: { id: order.id.toString() },
       update: {
-        clientId: order.clientId,
-        userId: order.userId,
+        clientId: order.clientId.toString(),
+        userId: order.userId.toString(),
         status: order.status,
         totalAmount: new Decimal(order.totalAmount),
         orderDate: order.orderDate,
         isPartial: order.isPartial,
       },
       create: {
-        id: order.id,
-        clientId: order.clientId,
-        userId: order.userId,
+        id: order.id.toString(),
+        clientId: order.clientId.toString(),
+        userId: order.userId.toString(),
         status: order.status,
         totalAmount: new Decimal(order.totalAmount),
         orderDate: order.orderDate,
@@ -159,11 +159,11 @@ async function main() {
   // 6. Ensure all orders from orderDetails exist before seeding details
   const detailOrderIds = [...new Set(seedDetails.map(d => d.orderId))];
   for (const orderId of detailOrderIds) {
-    const orderExists = await prisma.order.findUnique({ where: { id: orderId }});
+    const orderExists = await prisma.order.findUnique({ where: { id: orderId.toString() }});
     if (!orderExists) {
         // Find a representative detail to get client/user info
         const detail = seedDetails.find(d => d.orderId === orderId)!;
-        const client = await prisma.client.findUnique({ where: { id: detail.clientId }});
+        const client = await prisma.client.findUnique({ where: { id: detail.clientId.toString() }});
         
         // Find a default user if no specific user is associated
         const user = await prisma.user.findFirst({ where: { role: 'Sales' } });
@@ -173,7 +173,7 @@ async function main() {
 
         await prisma.order.create({
             data: {
-                id: orderId,
+                id: orderId.toString(),
                 clientId: client.id,
                 userId: user.id,
                 status: 'pending',
@@ -190,13 +190,14 @@ async function main() {
   // 7. Seed Production Batches
   for (const batch of seedBatches) {
     await prisma.productionBatch.upsert({
-      where: { id: batch.id },
+      where: { id: batch.id.toString() },
       update: {
         ...batch,
+        id: batch.id.toString(),
         items: undefined, // Relation handled separately
       },
       create: {
-        id: batch.id,
+        id: batch.id.toString(),
         batchNumber: batch.batchNumber,
         productionDate: batch.productionDate,
         plannedDate: batch.plannedDate,
@@ -209,15 +210,25 @@ async function main() {
   // 8. Seed Order Details
   for (const detail of seedDetails) {
     await prisma.orderDetail.upsert({
-      where: { id: detail.id },
+      where: { id: detail.id.toString() },
       update: {
         ...detail,
+        id: detail.id.toString(),
+        productId: detail.productId.toString(),
+        orderId: detail.orderId.toString(),
+        clientId: detail.clientId.toString(),
+        batchId: detail.batchId?.toString(),
         unitPrice: new Decimal(detail.unitPrice),
         totalPrice: new Decimal(detail.totalPrice),
         productName: undefined, // Should be inferred from relation
       },
       create: {
         ...detail,
+        id: detail.id.toString(),
+        productId: detail.productId.toString(),
+        orderId: detail.orderId.toString(),
+        clientId: detail.clientId.toString(),
+        batchId: detail.batchId?.toString(),
         unitPrice: new Decimal(detail.unitPrice),
         totalPrice: new Decimal(detail.totalPrice),
         productName: undefined,
@@ -229,13 +240,21 @@ async function main() {
   // 9. Seed Claims
   for (const claim of seedClaims) {
     await prisma.claim.upsert({
-        where: { id: claim.id },
+        where: { id: claim.id.toString() },
         update: {
             ...claim,
+            id: claim.id.toString(),
+            orderDetailId: claim.orderDetailId.toString(),
+            orderId: claim.orderId.toString(),
+            clientId: claim.clientId.toString(),
             clientName: undefined
         },
         create: {
             ...claim,
+            id: claim.id.toString(),
+            orderDetailId: claim.orderDetailId.toString(),
+            orderId: claim.orderId.toString(),
+            clientId: claim.clientId.toString(),
             clientName: undefined
         }
     })

@@ -1,7 +1,18 @@
-
-import { db } from '../src/lib/firebase.ts';
+/**
+ * Populates the Firebase Firestore database with initial data.
+ */
+import { db } from '@/lib/firebase'; // Corrected import path
 import { collection, doc, writeBatch, Timestamp } from 'firebase/firestore';
-import { roles, users, clients, products, orders, orderDetails, productionBatches, claims } from '../src/lib/data.ts';
+import {
+  roles as seedRoles,
+  users as seedUsers,
+  clients as seedClients,
+  products as seedProducts,
+  orders as seedOrders,
+  productionBatches as seedBatches,
+  orderDetails as seedDetails,
+  claims as seedClaims,
+} from '../src/lib/data.ts';
 import bcrypt from 'bcryptjs';
 
 const passwordForRole = (role) => {
@@ -13,34 +24,38 @@ const passwordForRole = (role) => {
   }
 };
 
-// Helper to commit batches in chunks to avoid exceeding Firestore's 500 operations limit
 const commitBatchInChunks = async (collectionName, data) => {
-  console.log(`Seeding ${collectionName}...`);
   let batch = writeBatch(db);
   let count = 0;
-
   for (const item of data) {
+    // Ensure ID is a string for Firestore document IDs
+    const docId = String(item.id); 
+    const docRef = doc(db, collectionName, docId);
+    
+    // Create a mutable copy and handle special data types
     const { id, ...itemData } = item;
-    const docRef = doc(db, collectionName, id.toString());
-
-    // Convert date properties to Firestore Timestamps
+    
     for (const key in itemData) {
-      if (itemData[key] instanceof Date) {
-        itemData[key] = Timestamp.fromDate(itemData[key]);
+      if (Object.prototype.hasOwnProperty.call(itemData, key)) {
+        const value = itemData[key];
+        // Convert any date strings or Date objects to Firestore Timestamps
+        if (value instanceof Date || (typeof value === 'string' && !isNaN(Date.parse(value)))) {
+           itemData[key] = Timestamp.fromDate(new Date(value));
+        }
       }
     }
-    
+
     // Special handling for productionBatches items array
     if (collectionName === 'productionBatches' && Array.isArray(itemData.items)) {
-        itemData.items = itemData.items.map(orderDetail => orderDetail.id); // Store only IDs
+        itemData.items = itemData.items.map(batchItem => String(batchItem.id));
     }
-
+    
     batch.set(docRef, itemData);
     count++;
-
+    
     if (count % 499 === 0) {
       await batch.commit();
-      console.log(`Committed ${count} documents to ${collectionName}...`);
+      console.log(`Committed ${count} documents to ${collectionName}.`);
       batch = writeBatch(db);
     }
   }
@@ -52,47 +67,38 @@ const commitBatchInChunks = async (collectionName, data) => {
 };
 
 async function main() {
-  try {
-    console.log('Start seeding Firebase...');
+  console.log('Start seeding Firebase...');
 
-    // 1. Seed Roles
-    const rolesBatch = writeBatch(db);
-    roles.forEach((role) => {
-      const roleRef = doc(db, 'roles', role.id.toString());
-      rolesBatch.set(roleRef, { name: role.name, permissions: role.permissions });
-    });
-    await rolesBatch.commit();
-    console.log('Roles seeded.');
-
-    // 2. Seed Users
-    const usersBatch = writeBatch(db);
-    for (const user of users) {
+  // 1. Seed Roles
+  await commitBatchInChunks('roles', seedRoles);
+  
+  // 2. Seed Users
+  const usersWithHashedPasswords = await Promise.all(
+    seedUsers.map(async (user) => {
       const password = passwordForRole(user.role);
       const passwordHash = await bcrypt.hash(password, 10);
-      const userRef = doc(db, 'users', user.id.toString());
-      usersBatch.set(userRef, {
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        lastLogin: Timestamp.fromDate(user.lastLogin),
-        passwordHash: passwordHash,
-      });
-    }
-    await usersBatch.commit();
-    console.log('Users seeded.');
+      const { lastLogin, ...rest } = user;
+      return {
+        ...rest,
+        lastLogin: Timestamp.fromDate(new Date(lastLogin)),
+        passwordHash,
+      };
+    })
+  );
+  await commitBatchInChunks('users', usersWithHashedPasswords);
 
-    // 3. Seed other collections using the helper
-    await commitBatchInChunks('clients', clients);
-    await commitBatchInChunks('products', products);
-    await commitBatchInChunks('orders', orders);
-    await commitBatchInChunks('orderDetails', orderDetails);
-    await commitBatchInChunks('productionBatches', productionBatches);
-    await commitBatchInChunks('claims', claims);
+  // 3. Seed other collections
+  await commitBatchInChunks('clients', seedClients);
+  await commitBatchInChunks('products', seedProducts);
+  await commitBatchInChunks('orders', seedOrders);
+  await commitBatchInChunks('productionBatches', seedBatches);
+  await commitBatchInChunks('orderDetails', seedDetails);
+  await commitBatchInChunks('claims', seedClaims);
 
-    console.log('Firebase seeding finished successfully!');
-  } catch (error) {
-    console.error('Seeding failed:', error);
-  }
+  console.log('Seeding finished successfully.');
 }
 
-main();
+main().catch((e) => {
+  console.error('Seeding failed:', e);
+  process.exit(1);
+});

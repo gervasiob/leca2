@@ -42,9 +42,13 @@ export async function middleware(req: NextRequest) {
   const isLoggedIn = Boolean(cookies.get('auth_user')?.value);
 
   const publicPages = ['/login', '/register'];
-  const publicApi = ['/api/login', '/api/register', '/api/logout', '/api/db'];
+  const publicApi = ['/api/login', '/api/register', '/api/logout', '/api/db', '/api/roles'];
 
   if (isAsset(pathname)) {
+    return NextResponse.next();
+  }
+  
+  if (publicApi.some(p => pathname.startsWith(p))) {
     return NextResponse.next();
   }
 
@@ -52,10 +56,6 @@ export async function middleware(req: NextRequest) {
     if (isLoggedIn) {
       return NextResponse.redirect(new URL('/dashboard', nextUrl));
     }
-    return NextResponse.next();
-  }
-  
-  if (publicApi.some(p => pathname.startsWith(p))) {
     return NextResponse.next();
   }
 

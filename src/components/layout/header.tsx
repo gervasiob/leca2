@@ -25,6 +25,7 @@ import {
   UserCog,
   LogOut,
   Building2,
+  BarChart3,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -55,6 +56,7 @@ const otherNavLinks = [
   { href: '/production/batches', icon: Factory, label: 'Producción' },
   { href: '/dispatch', icon: FileText, label: 'Remitos' },
   { href: '/price-lists', icon: ClipboardList, label: 'Listas de Precios' },
+  { href: '/report', icon: BarChart3, label: 'Reportes' },
 ];
 
 const settingsLinks = [
@@ -119,6 +121,7 @@ export function Header() {
     if (label === 'Producción') return can('Producción');
     if (label === 'Remitos') return can('Remitos');
     if (label === 'Listas de Precios') return can('Listas de Precios');
+  if (label === 'Reportes') return can('Reportes');
     return true;
   });
   const canSettings = can('Configuración');

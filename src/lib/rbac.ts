@@ -14,6 +14,7 @@ export const SCREENS_TO_PATHS: Record<string, string[]> = {
   'Remitos': ['/dispatch'],
   'Listas de Precios': ['/price-lists'],
   'Configuración': ['/settings', '/settings/users', '/settings/roles', '/settings/products'],
+  'Reportes': ['/report'],
 };
 
 export const normalizeName = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
@@ -21,10 +22,7 @@ export const normalizeName = (s: string) => s.normalize('NFD').replace(/[\u0300-
 export function isPathAllowed(pathname: string, allowedScreens: string[]): boolean {
   const normalizedPath = pathname.toLowerCase();
 
-  // Siempre permitir dashboard como fallback para usuarios logueados
-  if (normalizedPath.startsWith('/dashboard')) return true;
-
-  // Ventas: '/sales/*' requiere 'Ventas'; '/sales/claims' requiere 'Reclamos'
+  // Reglas específicas de Ventas
   if (normalizedPath.startsWith('/sales')) {
     const hasSales = allowedScreens.includes('Ventas');
     const hasClaims = allowedScreens.includes('Reclamos');
@@ -34,11 +32,15 @@ export function isPathAllowed(pathname: string, allowedScreens: string[]): boole
     return hasSales;
   }
 
+  // Reglas generales: match por prefijo
   for (const screen of allowedScreens) {
     const prefixes = SCREENS_TO_PATHS[screen];
     if (!prefixes) continue;
-    if (prefixes.some((prefix) => normalizedPath.startsWith(prefix.toLowerCase()))) {
-      return true;
+    for (const p of prefixes) {
+      const pref = p.toLowerCase();
+      if (normalizedPath === pref || normalizedPath.startsWith(pref + '/')) {
+        return true;
+      }
     }
   }
   return false;

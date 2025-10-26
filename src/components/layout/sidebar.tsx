@@ -27,6 +27,7 @@ import {
   FileText,
   UserCog,
   Building2,
+  BarChart3,
 } from 'lucide-react';
 import { PaintBucketIcon } from '../icons';
 import { cn } from '@/lib/utils';
@@ -49,6 +50,7 @@ const otherLinks = [
   { href: '/production/batches', icon: Factory, label: 'Producción' },
   { href: '/dispatch', icon: FileText, label: 'Remitos' },
   { href: '/price-lists', icon: ClipboardList, label: 'Listas de Precios' },
+  { href: '/report', icon: BarChart3, label: 'Reportes' },
 ];
 
 const settingsLinks = [
@@ -99,6 +101,7 @@ export function Sidebar() {
     if (label === 'Producción') return can('Producción');
     if (label === 'Remitos') return can('Remitos');
     if (label === 'Listas de Precios') return can('Listas de Precios');
+  if (label === 'Reportes') return can('Reportes');
     return true;
   });
 

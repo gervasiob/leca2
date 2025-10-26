@@ -41,6 +41,16 @@ const roleNameToEnum = (roleName: string): UserRole => {
   return mapping[roleName] || UserRole.Invitado;
 };
 
+// Map display names used in roles seed (es/en)
+const roleDisplayName = (roleName: string): string => {
+  const mapping: Record<string, string> = {
+    Admin: 'Admin',
+    Sales: 'Ventas',
+    Production: 'Producción',
+    Invitado: 'Invitado',
+  };
+  return mapping[roleName] || roleName;
+};
 const passwordForRole = (
   role: 'Admin' | 'Sales' | 'Production' | 'Invitado'
 ) =>
@@ -72,7 +82,7 @@ async function main() {
   // 2. Seed Users
   for (const user of seedUsers) {
     const role = await prisma.role.findFirst({
-      where: { name: { equals: user.role, mode: 'insensitive' } },
+      where: { name: { equals: roleDisplayName(user.role), mode: 'insensitive' } },
     });
     if (!role) {
       console.warn(`Role "${user.role}" not found for user "${user.name}". Skipping.`);
@@ -106,9 +116,30 @@ async function main() {
   // 3. Seed Clients
   for (const client of seedClients) {
     await prisma.client.upsert({
-      where: { id: client.id.toString() },
-      update: { ...client, id: client.id.toString() },
-      create: { ...client, id: client.id.toString() },
+      where: { id: client.id },
+      update: { 
+        name: client.name,
+        cuit: client.cuit,
+        address: client.address,
+        phone: client.phone,
+        email: client.email,
+        discountLevel: client.discountLevel,
+        canEditPrices: client.canEditPrices,
+        commissionFee: client.commissionFee,
+        sellsOnInstallments: client.sellsOnInstallments,
+      },
+      create: { 
+        id: client.id,
+        name: client.name,
+        cuit: client.cuit,
+        address: client.address,
+        phone: client.phone,
+        email: client.email,
+        discountLevel: client.discountLevel,
+        canEditPrices: client.canEditPrices,
+        commissionFee: client.commissionFee,
+        sellsOnInstallments: client.sellsOnInstallments,
+      },
     });
   }
   console.log('Clients seeded.');
@@ -116,17 +147,30 @@ async function main() {
   // 4. Seed Products
   for (const product of seedProducts) {
     await prisma.product.upsert({
-      where: { id: product.id.toString() },
-      update: { ...product, id: product.id.toString() },
-      create: { ...product, id: product.id.toString() },
+      where: { id: product.id },
+      update: { 
+        name: product.name,
+        type: product.type,
+        application: product.application,
+        colors: product.colors as unknown as Prisma.JsonValue,
+        status: product.status,
+      },
+      create: { 
+        id: product.id,
+        name: product.name,
+        type: product.type,
+        application: product.application,
+        colors: product.colors as unknown as Prisma.JsonValue,
+        status: product.status,
+      },
     });
   }
   console.log('Products seeded.');
 
   // 5. Seed Orders
   for (const order of seedOrders) {
-    const client = await prisma.client.findUnique({ where: { id: order.clientId.toString() } });
-    const user = await prisma.user.findUnique({ where: { id: order.userId.toString() } });
+    const client = await prisma.client.findUnique({ where: { id: order.clientId } });
+    const user = await prisma.user.findUnique({ where: { id: order.userId } });
 
     if (!client || !user) {
       console.warn(`Client or User not found for order ${order.id}. Skipping.`);
@@ -134,19 +178,19 @@ async function main() {
     }
 
     await prisma.order.upsert({
-      where: { id: order.id.toString() },
+      where: { id: order.id },
       update: {
-        clientId: order.clientId.toString(),
-        userId: order.userId.toString(),
+        clientId: order.clientId,
+        userId: order.userId,
         status: order.status,
         totalAmount: new Decimal(order.totalAmount),
         orderDate: order.orderDate,
         isPartial: order.isPartial,
       },
       create: {
-        id: order.id.toString(),
-        clientId: order.clientId.toString(),
-        userId: order.userId.toString(),
+        id: order.id,
+        clientId: order.clientId,
+        userId: order.userId,
         status: order.status,
         totalAmount: new Decimal(order.totalAmount),
         orderDate: order.orderDate,
@@ -159,21 +203,18 @@ async function main() {
   // 6. Ensure all orders from orderDetails exist before seeding details
   const detailOrderIds = [...new Set(seedDetails.map(d => d.orderId))];
   for (const orderId of detailOrderIds) {
-    const orderExists = await prisma.order.findUnique({ where: { id: orderId.toString() }});
+    const orderExists = await prisma.order.findUnique({ where: { id: orderId }});
     if (!orderExists) {
-        // Find a representative detail to get client/user info
         const detail = seedDetails.find(d => d.orderId === orderId)!;
-        const client = await prisma.client.findUnique({ where: { id: detail.clientId.toString() }});
-        
-        // Find a default user if no specific user is associated
-        const user = await prisma.user.findFirst({ where: { role: 'Sales' } });
+        const client = await prisma.client.findUnique({ where: { id: detail.clientId }});
+        const user = await prisma.user.findFirst({ where: { role: UserRole.Sales } });
         if (!user || !client) continue;
 
         const totalAmount = seedDetails.filter(d => d.orderId === orderId).reduce((sum, item) => sum + item.totalPrice, 0);
 
         await prisma.order.create({
             data: {
-                id: orderId.toString(),
+                id: orderId,
                 clientId: client.id,
                 userId: user.id,
                 status: 'pending',
@@ -186,18 +227,18 @@ async function main() {
     }
   }
 
-
   // 7. Seed Production Batches
   for (const batch of seedBatches) {
     await prisma.productionBatch.upsert({
-      where: { id: batch.id.toString() },
+      where: { id: batch.id },
       update: {
-        ...batch,
-        id: batch.id.toString(),
-        items: undefined, // Relation handled separately
+        batchNumber: batch.batchNumber,
+        productionDate: batch.productionDate,
+        plannedDate: batch.plannedDate,
+        status: batch.status,
       },
       create: {
-        id: batch.id.toString(),
+        id: batch.id,
         batchNumber: batch.batchNumber,
         productionDate: batch.productionDate,
         plannedDate: batch.plannedDate,
@@ -210,28 +251,45 @@ async function main() {
   // 8. Seed Order Details
   for (const detail of seedDetails) {
     await prisma.orderDetail.upsert({
-      where: { id: detail.id.toString() },
+      where: { id: detail.id },
       update: {
-        ...detail,
-        id: detail.id.toString(),
-        productId: detail.productId.toString(),
-        orderId: detail.orderId.toString(),
-        clientId: detail.clientId.toString(),
-        batchId: detail.batchId?.toString(),
+        productId: detail.productId,
+        quantity: detail.quantity,
         unitPrice: new Decimal(detail.unitPrice),
         totalPrice: new Decimal(detail.totalPrice),
-        productName: undefined, // Should be inferred from relation
+        orderId: detail.orderId,
+        clientId: detail.clientId,
+        cartId: detail.cartId ?? null,
+        paymentId: detail.paymentId ?? null,
+        deliveryNoteId: detail.deliveryNoteId ?? null,
+        batchId: detail.batchId ?? null,
+        status: detail.status,
+        isProduced: detail.isProduced,
+        productionDate: detail.productionDate ?? null,
+        productionDoneDate: detail.productionDoneDate ?? null,
+        dispatchReadyDate: detail.dispatchReadyDate ?? null,
+        dispatchedDate: detail.dispatchedDate ?? null,
+        deliveryNoteDate: detail.deliveryNoteDate ?? null,
       },
       create: {
-        ...detail,
-        id: detail.id.toString(),
-        productId: detail.productId.toString(),
-        orderId: detail.orderId.toString(),
-        clientId: detail.clientId.toString(),
-        batchId: detail.batchId?.toString(),
+        id: detail.id,
+        productId: detail.productId,
+        quantity: detail.quantity,
         unitPrice: new Decimal(detail.unitPrice),
         totalPrice: new Decimal(detail.totalPrice),
-        productName: undefined,
+        orderId: detail.orderId,
+        clientId: detail.clientId,
+        cartId: detail.cartId ?? null,
+        paymentId: detail.paymentId ?? null,
+        deliveryNoteId: detail.deliveryNoteId ?? null,
+        batchId: detail.batchId ?? null,
+        status: detail.status,
+        isProduced: detail.isProduced,
+        productionDate: detail.productionDate ?? null,
+        productionDoneDate: detail.productionDoneDate ?? null,
+        dispatchReadyDate: detail.dispatchReadyDate ?? null,
+        dispatchedDate: detail.dispatchedDate ?? null,
+        deliveryNoteDate: detail.deliveryNoteDate ?? null,
       },
     });
   }
@@ -240,22 +298,25 @@ async function main() {
   // 9. Seed Claims
   for (const claim of seedClaims) {
     await prisma.claim.upsert({
-        where: { id: claim.id.toString() },
+        where: { id: claim.id },
         update: {
-            ...claim,
-            id: claim.id.toString(),
-            orderDetailId: claim.orderDetailId.toString(),
-            orderId: claim.orderId.toString(),
-            clientId: claim.clientId.toString(),
-            clientName: undefined
+            orderDetailId: claim.orderDetailId,
+            orderId: claim.orderId,
+            clientId: claim.clientId,
+            reason: claim.reason,
+            status: claim.status,
+            resolution: claim.resolution ?? null,
+            createdAt: claim.createdAt,
         },
         create: {
-            ...claim,
-            id: claim.id.toString(),
-            orderDetailId: claim.orderDetailId.toString(),
-            orderId: claim.orderId.toString(),
-            clientId: claim.clientId.toString(),
-            clientName: undefined
+            id: claim.id,
+            orderDetailId: claim.orderDetailId,
+            orderId: claim.orderId,
+            clientId: claim.clientId,
+            reason: claim.reason,
+            status: claim.status,
+            resolution: claim.resolution ?? null,
+            createdAt: claim.createdAt,
         }
     })
   }

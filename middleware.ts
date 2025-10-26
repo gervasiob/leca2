@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { ROLE_NAME_MAP, normalizeName, isPathAllowed } from '@/lib/rbac';
+import { ROLE_NAME_MAP, normalizeName, isPathAllowed, SCREENS_TO_PATHS } from '@/lib/rbac';
 import { UserRole } from '@/lib/types';
 
 async function fetchUserPermissions(request: NextRequest): Promise<string[]> {
     try {
-        const rolesUrl = new URL('/api/roles', request.nextUrl).toString();
+        const rolesUrl = `${request.nextUrl.origin}/api/roles`;
         // Las llamadas a API desde el middleware deben ser absolutas y manejar la autenticación
         const res = await fetch(rolesUrl, {
           headers: { cookie: request.headers.get('cookie') ?? '' },
@@ -13,7 +13,18 @@ async function fetchUserPermissions(request: NextRequest): Promise<string[]> {
 
         if (!res.ok) return [];
 
-        const data = await res.json();
+        const contentType = res.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+          return [];
+        }
+
+        let data: any;
+        try {
+          data = await res.json();
+        } catch {
+          return [];
+        }
+
         if (!Array.isArray(data?.roles)) return [];
 
         const rawCookie = request.cookies.get('auth_user')?.value;
@@ -34,6 +45,15 @@ async function fetchUserPermissions(request: NextRequest): Promise<string[]> {
     }
 }
 
+function resolveDefaultPath(allowedScreens: string[]): string {
+  for (const screen of allowedScreens) {
+    const paths = SCREENS_TO_PATHS[screen];
+    if (paths && paths.length > 0) {
+      return paths[0];
+    }
+  }
+  return '/login';
+}
 
 export async function middleware(req: NextRequest) {
   const { nextUrl, cookies } = req;
@@ -50,7 +70,9 @@ export async function middleware(req: NextRequest) {
 
   if (publicPages.includes(pathname)) {
     if (isLoggedIn) {
-      return NextResponse.redirect(new URL('/dashboard', nextUrl));
+      const allowedScreens = await fetchUserPermissions(req);
+      const defaultPath = resolveDefaultPath(allowedScreens);
+      return NextResponse.redirect(new URL(defaultPath, nextUrl));
     }
     return NextResponse.next();
   }
@@ -74,15 +96,8 @@ export async function middleware(req: NextRequest) {
   const allowedScreens = await fetchUserPermissions(req);
   
   if (!isPathAllowed(pathname, allowedScreens)) {
-    // Si la ruta no está permitida, redirigir a dashboard.
-    // Evitar bucle de redirección si dashboard no está permitido (aunque debería estarlo).
-    if (pathname === '/dashboard') {
-        // Si intenta acceder a dashboard y no tiene permiso, 
-        // podría redirigir a una página de "acceso denegado" o simplemente no hacer nada.
-        // Por ahora, lo dejamos pasar para evitar un bucle.
-        return NextResponse.next();
-    }
-    return NextResponse.redirect(new URL('/dashboard', nextUrl));
+    const defaultPath = resolveDefaultPath(allowedScreens);
+    return NextResponse.redirect(new URL(defaultPath, nextUrl));
   }
 
   return NextResponse.next();

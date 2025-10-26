@@ -2,8 +2,8 @@
 // Enumeración para roles de usuario, para consistencia.
 export enum UserRole {
   Admin = 'Admin',
-  Sales = 'Sales',
-  Production = 'Production',
+  Ventas = 'Ventas',
+  Producción = 'Producción',
   Invitado = 'Invitado',
 }
 

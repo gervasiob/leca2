@@ -134,7 +134,7 @@ model Claim {
 
 enum UserRole {
   Admin
-  Sales
-  Production
+  Ventas
+  Producción
   Invitado
 }

@@ -41,12 +41,17 @@ import { useToast } from '@/hooks/use-toast';
 
 const roleVariantMap: { [key: string]: 'default' | 'secondary' | 'outline' } = {
     'Admin': 'default',
-    'Sales': 'secondary',
-    'Production': 'outline',
+    'Ventas': 'secondary',
+    'Producción': 'outline',
     'Invitado': 'outline',
   };
 
-const ROLE_OPTIONS = ['Admin', 'Sales', 'Production', 'Invitado'];
+const ENUM_ROLES = ['Admin', 'Ventas', 'Producción', 'Invitado'];
+
+const toEnumRole = (name: string) => ENUM_ROLES.find(r => r.toLowerCase() === name.toLowerCase());
+
+// Roles disponibles desde la tabla roles
+
 
 type UserRow = { id: number; name: string; email: string; role: string; lastLogin: Date | null };
 
@@ -54,6 +59,27 @@ export default function UserSettingsPage() {
   const { toast } = useToast();
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
+ 
+  const [availableRoles, setAvailableRoles] = useState<string[]>(ENUM_ROLES);
+  useEffect(() => {
+    const loadRoles = async () => {
+      try {
+        const res = await fetch('/api/roles', { credentials: 'include' });
+        console.log('res', await res.json());
+        const data = await res.json();
+        if (res.ok && Array.isArray(data?.roles)) {
+          const names = data.roles
+            .map((r: any) => String(r.name))
+            .map((n: string) => toEnumRole(n))
+            .filter(Boolean) as string[];
+          if (names.length > 0) setAvailableRoles(names);
+        }
+      } catch {
+        // fallback al ENUM_ROLES
+      }
+    };
+    loadRoles();
+  }, []);
 
   const [editOpen, setEditOpen] = useState(false);
   const [editUser, setEditUser] = useState<UserRow | null>(null);
@@ -206,7 +232,7 @@ export default function UserSettingsPage() {
                     <SelectValue placeholder="Seleccione un rol" />
                   </SelectTrigger>
                   <SelectContent>
-                    {ROLE_OPTIONS.map(r => (
+                    {availableRoles.map(r => (
                       <SelectItem key={r} value={r}>{r}</SelectItem>
                     ))}
                   </SelectContent>

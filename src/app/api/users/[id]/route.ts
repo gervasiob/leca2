@@ -13,24 +13,32 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     const name = typeof body?.name === 'string' ? body.name.trim() : undefined;
     const emailRaw = typeof body?.email === 'string' ? body.email : undefined;
     const email = emailRaw ? emailRaw.trim().toLowerCase() : undefined;
-    const role = typeof body?.role === 'string' ? body.role.trim() : undefined;
+    const roleInput = typeof body?.role === 'string' ? body.role.trim() : undefined;
 
     const data: any = {};
     if (name) data.name = name;
     if (email) data.email = email;
 
-    if (role) {
-      // Validar rol contra enum
-      const validRoles: Array<keyof typeof UserRole> = ['Admin', 'Sales', 'Production', 'Invitado'];
-      if (!validRoles.includes(role as any)) {
+    if (roleInput) {
+      // Aceptar español o inglés y mapear al enum en español
+      const roleMap: Record<string, keyof typeof UserRole> = {
+        Admin: 'Admin',
+        Sales: 'Ventas',
+        Production: 'Producción',
+        Invitado: 'Invitado',
+        Ventas: 'Ventas',
+        'Producción': 'Producción',
+      };
+      const mappedRole = roleMap[roleInput];
+      if (!mappedRole) {
         return NextResponse.json({ ok: false, error: 'Rol inválido' }, { status: 400 });
       }
-      data.role = (UserRole as any)[role];
+      data.role = (UserRole as any)[mappedRole];
 
-      // Encontrar Role en tabla para roleId
-      const roleRow = await prisma.role.findFirst({ where: { name: role } });
+      // Encontrar Role en tabla por nombre mostrado (español)
+      const roleRow = await prisma.role.findFirst({ where: { name: data.role } });
       if (!roleRow) {
-        return NextResponse.json({ ok: false, error: `El rol '${role}' no existe. Ejecute el seeder.` }, { status: 400 });
+        return NextResponse.json({ ok: false, error: `El rol '${data.role}' no existe. Ejecute el seeder.` }, { status: 400 });
       }
       data.roleId = roleRow.id;
     }

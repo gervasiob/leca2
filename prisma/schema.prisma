@@ -133,8 +133,7 @@ model Claim {
 }
 
 enum UserRole {
-  Admin
-  Ventas
-  Producción
-  Invitado
+  VENTAS     @map("Ventas")
+  PRODUCCION @map("Producción")
+  INVITADO   @map("Invitado")
 }

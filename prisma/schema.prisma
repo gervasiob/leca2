@@ -2,7 +2,8 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
@@ -21,31 +22,30 @@ model User {
   id           Int      @id @default(autoincrement())
   name         String
   email        String   @unique
+  role         UserRole @default(Invitado)
+  roleId       Int
+  role_relation Role    @relation(fields: [roleId], references: [id])
+  lastLogin    DateTime?
   passwordHash String
-  role         UserRole @default(INVITADO)
-  roleId       Int?
-  lastLogin    DateTime @default(now())
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  roleRel      Role?    @relation(fields: [roleId], references: [id])
   orders       Order[]
+
+  @@index([roleId])
 }
 
 model Client {
-  id                 Int      @id @default(autoincrement())
-  name               String
-  cuit               String   @unique
-  address            String
-  phone              String
-  email              String   @unique
-  discountLevel      Int
-  canEditPrices      Boolean
-  commissionFee      Float
-  sellsOnInstallments Boolean
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  orders             Order[]
-  orderDetails       OrderDetail[]
+  id                  Int           @id @default(autoincrement())
+  name                String
+  cuit                String        @unique
+  address             String
+  phone               String
+  email               String        @unique
+  discountLevel       Int           @default(1)
+  canEditPrices       Boolean       @default(false)
+  commissionFee       Float         @default(0)
+  sellsOnInstallments Boolean       @default(false)
+  orders              Order[]
+  orderDetails        OrderDetail[]
+  claims              Claim[]
 }
 
 model Product {
@@ -53,87 +53,88 @@ model Product {
   name        String
   type        String
   application String
-  colors      Json
+  colors      String[]
   status      String
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
   orderDetails OrderDetail[]
 }
 
 model Order {
-  id          Int         @id @default(autoincrement())
-  userId      Int
+  id          Int           @id @default(autoincrement())
   clientId    Int
+  client      Client        @relation(fields: [clientId], references: [id])
+  userId      Int
+  user        User          @relation(fields: [userId], references: [id])
   status      String
   totalAmount Decimal
   orderDate   DateTime
   isPartial   Boolean
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  user        User        @relation(fields: [userId], references: [id])
-  client      Client      @relation(fields: [clientId], references: [id])
-  details     OrderDetail[]
+  orderDetails OrderDetail[]
   claims      Claim[]
-}
 
-model ProductionBatch {
-  id             Int        @id @default(autoincrement())
-  batchNumber    String     @unique
-  productionDate DateTime
-  plannedDate    DateTime
-  expeditionDate DateTime?
-  sentToClientDate DateTime?
-  qrCode         String?
-  status         String
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-  items          OrderDetail[]
+  @@index([clientId])
+  @@index([userId])
 }
 
 model OrderDetail {
-  id                Int       @id @default(autoincrement())
-  productId         Int
-  quantity          Int
-  unitPrice         Decimal
-  totalPrice        Decimal
-  orderId           Int
-  clientId          Int
-  cartId            String?
-  paymentId         Int?
-  deliveryNoteId    Int?
-  batchId           Int?
-  status            String
-  isProduced        Boolean   @default(false)
-  productionDate    DateTime?
+  id                 Int      @id @default(autoincrement())
+  orderId            Int
+  order              Order    @relation(fields: [orderId], references: [id])
+  productId          Int
+  product            Product  @relation(fields: [productId], references: [id])
+  clientId           Int
+  client             Client   @relation(fields: [clientId], references: [id])
+  quantity           Int
+  unitPrice          Decimal
+  totalPrice         Decimal
+  cartId             String?
+  paymentId          String?
+  deliveryNoteId     String?
+  batchId            Int?
+  batch              ProductionBatch? @relation(fields: [batchId], references: [id])
+  status             String
+  isProduced         Boolean
+  productionDate     DateTime?
   productionDoneDate DateTime?
-  dispatchReadyDate DateTime?
-  dispatchedDate    DateTime?
-  deliveryNoteDate  DateTime?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  dispatchReadyDate  DateTime?
+  dispatchedDate     DateTime?
+  deliveryNoteDate   DateTime?
+  claim              Claim?
 
-  order   Order    @relation(fields: [orderId], references: [id])
-  product Product  @relation(fields: [productId], references: [id])
-  client  Client   @relation(fields: [clientId], references: [id])
-  batch   ProductionBatch? @relation(fields: [batchId], references: [id])
-  claims  Claim[]
+  @@index([orderId])
+  @@index([productId])
+  @@index([clientId])
+  @@index([batchId])
+}
+
+model ProductionBatch {
+  id             Int           @id @default(autoincrement())
+  batchNumber    String
+  productionDate DateTime
+  plannedDate    DateTime
+  status         String
+  items          OrderDetail[]
 }
 
 model Claim {
-  id            Int      @id @default(autoincrement())
-  orderDetailId Int
+  id            Int         @id @default(autoincrement())
+  orderDetailId Int         @unique
+  orderDetail   OrderDetail @relation(fields: [orderDetailId], references: [id])
   orderId       Int
+  order         Order       @relation(fields: [orderId], references: [id])
   clientId      Int
+  client        Client      @relation(fields: [clientId], references: [id])
   reason        String
   status        String
   resolution    String?
-  createdAt     DateTime @default(now())
-  orderDetail   OrderDetail @relation(fields: [orderDetailId], references: [id])
-  order         Order       @relation(fields: [orderId], references: [id])
+  createdAt     DateTime
+
+  @@index([orderId])
+  @@index([clientId])
 }
 
 enum UserRole {
-  VENTAS     @map("Ventas")
-  PRODUCCION @map("Producción")
-  INVITADO   @map("Invitado")
+  Admin
+  Ventas
+  Producción
+  Invitado
 }

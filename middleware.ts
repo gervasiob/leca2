@@ -56,6 +56,11 @@ function resolveDefaultPath(allowedScreens: string[]): string {
 }
 
 export async function middleware(req: NextRequest) {
+  // Si la variable de entorno no está en 'true', saltamos el middleware.
+  if (process.env.MIDDLEWARE_ENABLED !== 'true') {
+    return NextResponse.next();
+  }
+  
   const { nextUrl, cookies } = req;
   const pathname = nextUrl.pathname;
 

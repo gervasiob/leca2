@@ -22,7 +22,7 @@ model User {
   name         String
   email        String   @unique
   passwordHash String
-  role         UserRole @default(Invitado)
+  role         UserRole @default(INVITADO)
   roleId       Int?
   lastLogin    DateTime @default(now())
   createdAt    DateTime @default(now())

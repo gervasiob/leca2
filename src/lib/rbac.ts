@@ -1,7 +1,7 @@
 export const ROLE_NAME_MAP: Record<string, string> = {
   Admin: 'Admin',
   Sales: 'Ventas',
-  Production: 'Producción',
+  Production: 'Produccion',
   Invitado: 'Invitado',
 };
 
@@ -10,7 +10,7 @@ export const SCREENS_TO_PATHS: Record<string, string[]> = {
   'Cuentas por Cobrar': ['/accounts-receivable'],
   'Ventas': ['/sales', '/sales/orders', '/sales/clients'],
   'Reclamos': ['/sales/claims'],
-  'Producción': ['/production', '/production/batches'],
+  'Produccion': ['/production', '/production/batches'],
   'Remitos': ['/dispatch'],
   'Listas de Precios': ['/price-lists'],
   'Configuración': ['/settings', '/settings/users', '/settings/roles', '/settings/products'],

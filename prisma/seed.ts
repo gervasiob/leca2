@@ -34,8 +34,8 @@ const prisma = new PrismaClient();
 const roleNameToEnum = (roleName: string): UserRole => {
   const mapping: { [key: string]: UserRole } = {
     Admin: UserRole.Admin,
-    Sales: UserRole.Sales,
-    Production: UserRole.Production,
+    Sales: UserRole.Ventas,
+    Production: UserRole.Produccion,
     Invitado: UserRole.Invitado,
   };
   return mapping[roleName] || UserRole.Invitado;
@@ -46,7 +46,7 @@ const roleDisplayName = (roleName: string): string => {
   const mapping: Record<string, string> = {
     Admin: 'Admin',
     Sales: 'Ventas',
-    Production: 'Producción',
+    Production: 'Produccion',
     Invitado: 'Invitado',
   };
   return mapping[roleName] || roleName;
@@ -152,7 +152,7 @@ async function main() {
         name: product.name,
         type: product.type,
         application: product.application,
-        colors: product.colors as unknown as Prisma.JsonValue,
+        colors: product.colors,
         status: product.status,
       },
       create: { 
@@ -160,7 +160,7 @@ async function main() {
         name: product.name,
         type: product.type,
         application: product.application,
-        colors: product.colors as unknown as Prisma.JsonValue,
+        colors: product.colors,
         status: product.status,
       },
     });
@@ -207,7 +207,7 @@ async function main() {
     if (!orderExists) {
         const detail = seedDetails.find(d => d.orderId === orderId)!;
         const client = await prisma.client.findUnique({ where: { id: detail.clientId }});
-        const user = await prisma.user.findFirst({ where: { role: UserRole.Sales } });
+        const user = await prisma.user.findFirst({ where: { role: UserRole.Ventas } });
         if (!user || !client) continue;
 
         const totalAmount = seedDetails.filter(d => d.orderId === orderId).reduce((sum, item) => sum + item.totalPrice, 0);

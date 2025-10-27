@@ -3,14 +3,14 @@
 export enum UserRole {
   Admin = 'Admin',
   Ventas = 'Ventas',
-  Producción = 'Producción',
+  Produccion = 'Produccion',
   Invitado = 'Invitado',
 }
 
 export type OrderDetailStatus = 'pending' | 'produced' | 'dispatched' | 'delivered' | 'claimed' | 'resolved' | 'cancelled';
 
 export interface Product {
-    id: string; // Firestore usa strings para los IDs
+    id: number;
     name: string;
     type: string;
     application: string;
@@ -19,8 +19,8 @@ export interface Product {
 }
 
 export interface OrderDetail {
-  id: string; // Firestore usa strings para los IDs
-  productId: string;
+  id: number;
+  productId: number;
   productName: string;
   type: string;
   application: string;
@@ -28,16 +28,16 @@ export interface OrderDetail {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
-  orderId: string;
-  clientId: string;
+  orderId: number;
+  clientId: number;
   cartId?: string;
   paymentId?: string;
   deliveryNoteId?: string;
-  batchId?: string;
+  batchId?: number;
   status: OrderDetailStatus;
   // Production fields
   isProduced: boolean;
-  productionDate?: Date; // O usa Timestamp de Firestore
+  productionDate?: Date;
   productionDoneDate?: Date;
   dispatchReadyDate?: Date;
   dispatchedDate?: Date;
@@ -45,18 +45,18 @@ export interface OrderDetail {
 }
 
 export interface Order {
-  id: string; // Firestore usa strings para los IDs
-  userId: string;
+  id: number;
+  userId: number;
   clientName: string;
-  clientId: string;
+  clientId: number;
   status: string;
   totalAmount: number;
-  orderDate: Date; // O usa Timestamp de Firestore
+  orderDate: Date;
   isPartial: boolean;
 }
 
 export interface Client {
-  id: string; // Firestore usa strings para los IDs
+  id: number;
   name: string;
   cuit: string;
   address: string;
@@ -69,7 +69,7 @@ export interface Client {
 }
 
 export interface ProductionBatch {
-  id: string; // Firestore usa strings para los IDs
+  id: number;
   batchNumber: string;
   productionDate: Date;
   plannedDate: Date;
@@ -81,10 +81,10 @@ export interface ProductionBatch {
 }
 
 export interface Claim {
-    id: string; // Firestore usa strings para los IDs
-    orderDetailId: string;
-    orderId: string;
-    clientId: string;
+    id: number;
+    orderDetailId: number;
+    orderId: number;
+    clientId: number;
     clientName: string;
     reason: string;
     status: 'open' | 'resolved' | 'closed';
@@ -93,17 +93,17 @@ export interface Claim {
 }
 
 export interface User {
-  id: string; // Firestore usa strings para los IDs
+  id: number;
   name: string;
   email: string;
-  role: UserRole;
-  lastLogin: Date; // O usa Timestamp de Firestore
-  passwordHash?: string; // El hash se almacena pero no se suele enviar al cliente
-  roleId?: number; // Hacemos roleId opcional
+  role: 'Admin' | 'Sales' | 'Production' | 'Invitado';
+  lastLogin: Date;
+  passwordHash?: string;
+  roleId?: number;
 }
 
 export interface Role {
-  id: number; // Mantenemos number aquí para consistencia con los datos originales, pero podría ser string
+  id: number;
   name: string;
   permissions: string[];
 }

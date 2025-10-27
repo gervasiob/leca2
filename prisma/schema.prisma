@@ -2,20 +2,12 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-}
-
-model Role {
-  id          Int      @id @default(autoincrement())
-  name        String   @unique
-  permissions String[]
-  users       User[]
 }
 
 model User {
@@ -24,73 +16,83 @@ model User {
   email        String   @unique
   role         UserRole @default(Invitado)
   roleId       Int
-  role_relation Role    @relation(fields: [roleId], references: [id])
-  lastLogin    DateTime?
   passwordHash String
+  lastLogin    DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  roleRel      Role     @relation(fields: [roleId], references: [id])
   orders       Order[]
 
-  @@index([roleId])
+  @@map("users")
+}
+
+model Role {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  permissions String[]
+  users       User[]
+
+  @@map("roles")
 }
 
 model Client {
-  id                  Int           @id @default(autoincrement())
-  name                String
-  cuit                String        @unique
-  address             String
-  phone               String
-  email               String        @unique
-  discountLevel       Int           @default(1)
-  canEditPrices       Boolean       @default(false)
-  commissionFee       Float         @default(0)
-  sellsOnInstallments Boolean       @default(false)
-  orders              Order[]
-  orderDetails        OrderDetail[]
-  claims              Claim[]
+  id                 Int           @id @default(autoincrement())
+  name               String
+  cuit               String        @unique
+  address            String
+  phone              String
+  email              String        @unique
+  discountLevel      Int
+  canEditPrices      Boolean
+  commissionFee      Float
+  sellsOnInstallments Boolean
+  orders             Order[]
+  orderDetails       OrderDetail[]
+  claims             Claim[]
+
+  @@map("clients")
 }
 
 model Product {
-  id          Int           @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   name        String
   type        String
   application String
   colors      String[]
   status      String
   orderDetails OrderDetail[]
+
+  @@map("products")
 }
 
 model Order {
   id          Int           @id @default(autoincrement())
   clientId    Int
-  client      Client        @relation(fields: [clientId], references: [id])
   userId      Int
-  user        User          @relation(fields: [userId], references: [id])
   status      String
-  totalAmount Decimal
-  orderDate   DateTime
+  totalAmount Decimal       @db.Decimal(10, 2)
+  orderDate   DateTime      @default(now())
   isPartial   Boolean
+  client      Client        @relation(fields: [clientId], references: [id])
+  user        User          @relation(fields: [userId], references: [id])
   orderDetails OrderDetail[]
   claims      Claim[]
 
-  @@index([clientId])
-  @@index([userId])
+  @@map("orders")
 }
 
 model OrderDetail {
   id                 Int      @id @default(autoincrement())
-  orderId            Int
-  order              Order    @relation(fields: [orderId], references: [id])
   productId          Int
-  product            Product  @relation(fields: [productId], references: [id])
-  clientId           Int
-  client             Client   @relation(fields: [clientId], references: [id])
   quantity           Int
-  unitPrice          Decimal
-  totalPrice         Decimal
+  unitPrice          Decimal  @db.Decimal(10, 2)
+  totalPrice         Decimal  @db.Decimal(10, 2)
+  orderId            Int
+  clientId           Int
   cartId             String?
   paymentId          String?
   deliveryNoteId     String?
   batchId            Int?
-  batch              ProductionBatch? @relation(fields: [batchId], references: [id])
   status             String
   isProduced         Boolean
   productionDate     DateTime?
@@ -98,43 +100,45 @@ model OrderDetail {
   dispatchReadyDate  DateTime?
   dispatchedDate     DateTime?
   deliveryNoteDate   DateTime?
-  claim              Claim?
+  order              Order    @relation(fields: [orderId], references: [id])
+  client             Client   @relation(fields: [clientId], references: [id])
+  product            Product  @relation(fields: [productId], references: [id])
+  batch              ProductionBatch? @relation(fields: [batchId], references: [id])
+  claim              Claim[]
 
-  @@index([orderId])
-  @@index([productId])
-  @@index([clientId])
-  @@index([batchId])
+  @@map("order_details")
 }
 
 model ProductionBatch {
   id             Int           @id @default(autoincrement())
-  batchNumber    String
+  batchNumber    String        @unique
   productionDate DateTime
   plannedDate    DateTime
   status         String
   items          OrderDetail[]
+
+  @@map("production_batches")
 }
 
 model Claim {
-  id            Int         @id @default(autoincrement())
-  orderDetailId Int         @unique
-  orderDetail   OrderDetail @relation(fields: [orderDetailId], references: [id])
+  id            Int      @id @default(autoincrement())
+  orderDetailId Int      @unique
   orderId       Int
-  order         Order       @relation(fields: [orderId], references: [id])
   clientId      Int
-  client        Client      @relation(fields: [clientId], references: [id])
   reason        String
   status        String
   resolution    String?
-  createdAt     DateTime
+  createdAt     DateTime @default(now())
+  orderDetail   OrderDetail @relation(fields: [orderDetailId], references: [id])
+  order         Order       @relation(fields: [orderId], references: [id])
+  client        Client      @relation(fields: [clientId], references: [id])
 
-  @@index([orderId])
-  @@index([clientId])
+  @@map("claims")
 }
 
 enum UserRole {
   Admin
   Ventas
-  Producción
+  Produccion
   Invitado
 }

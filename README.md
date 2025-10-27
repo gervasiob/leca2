@@ -1,16 +1,17 @@
-# Gestor de Fábrica - Next.js y Firebase
+# Gestor de Fábrica - Next.js y Prisma
 
-Aplicación de gestión integral para una fábrica, construida con Next.js, Tailwind CSS, ShadCN UI y Firebase.
+Aplicación de gestión integral para una fábrica, construida con Next.js, Tailwind CSS, ShadCN UI y Prisma con una base de datos PostgreSQL.
 
 ## Stack Tecnológico
 
 - **Framework:** Next.js (App Router)
 - **Lenguaje:** TypeScript
-- **Base de Datos:** Firebase Firestore
+- **ORM:** Prisma
+- **Base de Datos:** PostgreSQL
 - **Estilos:** Tailwind CSS
 - **Componentes UI:** ShadCN UI
 - **IA Generativa:** Google AI a través de Genkit
-- **Autenticación:** Firebase Authentication
+- **Autenticación:** Basada en credenciales y JWT
 
 ## Configuración del Proyecto
 
@@ -20,31 +21,34 @@ Aplicación de gestión integral para una fábrica, construida con Next.js, Tail
     ```
 
 2.  **Configurar variables de entorno:**
-    -   Crea un archivo `.env` en la raíz del proyecto si no existe.
-    -   Añade las credenciales de tu proyecto de Firebase y de Google AI.
+    -   Crea un archivo `.env` en la raíz del proyecto.
+    -   Añade la cadena de conexión de tu base de datos PostgreSQL y la clave de Google AI.
 
     ```env
-    # Firebase
-    NEXT_PUBLIC_FIREBASE_API_KEY="AIza..."
-    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="tu-proyecto.firebaseapp.com"
-    NEXT_PUBLIC_FIREBASE_PROJECT_ID="tu-proyecto"
-    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="tu-proyecto.appspot.com"
-    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="..."
-    NEXT_PUBLIC_FIREBASE_APP_ID="1:..."
+    # PostgreSQL (puedes obtenerla de tu proveedor de BBDD, ej: AWS RDS, Supabase, etc.)
+    DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE?schema=public&sslaccept=accept_invalid_certs"
 
     # Google AI (Genkit)
     GEMINI_API_KEY="..."
+
+    # Habilitar/Deshabilitar Middleware
+    MIDDLEWARE_ENABLED=true
+    ```
+    
+    **Nota sobre `sslaccept=accept_invalid_certs`**: Este parámetro se ha añadido para solucionar problemas de conexión en entornos de desarrollo que pueden no tener las librerías OpenSSL correctas. **No uses este parámetro en producción.**
+
+3.  **Ejecutar las migraciones de la base de datos:**
+    Este comando creará las tablas en tu base de datos según el esquema de Prisma.
+    ```bash
+    npx prisma migrate dev
     ```
 
-3.  **¿Cómo obtener las credenciales de Firebase?**
-    1.  Abre la [Consola de Firebase](https://console.firebase.google.com/) y selecciona tu proyecto.
-    2.  Haz clic en el ícono de engranaje (⚙️) junto a "Project Overview" y ve a **"Project settings"**.
-    3.  En la pestaña "General", ve a la sección "Your apps".
-    4.  Si no tienes una app web, créala haciendo clic en el ícono `</>`.
-    5.  En la configuración de tu app web, busca la sección "Firebase SDK snippet" y selecciona la opción **"Config"**.
-    6.  Copia los valores que aparecen y pégalos en tu archivo `.env`.
+4.  **Poblar la base de datos con datos de prueba (opcional):**
+    ```bash
+    npx prisma db seed
+    ```
 
-4.  **Ejecutar el servidor de desarrollo:**
+5.  **Ejecutar el servidor de desarrollo:**
     ```bash
     npm run dev
     ```
@@ -54,9 +58,9 @@ Aplicación de gestión integral para una fábrica, construida con Next.js, Tail
 
 -   `src/app`: Contiene las rutas y páginas de la aplicación (App Router).
 -   `src/components`: Componentes de React reutilizables.
--   `src/lib`: Utilidades, configuración de clientes (Firebase) y tipos.
+-   `src/lib`: Utilidades, cliente de Prisma y tipos.
 -   `src/ai`: Flujos y configuración de Genkit para funcionalidades de IA.
--   `src/styles`: Archivos de estilos globales.
+-   `prisma`: Esquema de la base de datos, migraciones y script de seeder.
 
 ## Funcionalidades Principales
 

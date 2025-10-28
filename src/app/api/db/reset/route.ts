@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import { exec } from 'child_process';
 import { promisify } from 'util';
@@ -5,9 +6,11 @@ import { promisify } from 'util';
 const execAsync = promisify(exec);
 
 async function handleDbReset() {
-  if (process.env.NODE_ENV === 'production') {
+  // Se cambia la condición para depender de la misma variable que el middleware.
+  // Si el middleware está habilitado, esta ruta peligrosa se deshabilita.
+  if (process.env.MIDDLEWARE_ENABLED === 'true') {
     return NextResponse.json(
-      { ok: false, error: 'Esta acción solo está permitida en desarrollo.' },
+      { ok: false, error: 'Esta acción solo está permitida cuando el middleware está deshabilitado.' },
       { status: 403 }
     );
   }

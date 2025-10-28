@@ -64,6 +64,12 @@ export async function middleware(req: NextRequest) {
   const { nextUrl, cookies } = req;
   const pathname = nextUrl.pathname;
 
+  // Rutas que se deben ignorar siempre
+  const alwaysPublic = ['/dev/db-viewer'];
+  if (alwaysPublic.some(p => pathname.startsWith(p))) {
+    return NextResponse.next();
+  }
+
   const isLoggedIn = Boolean(cookies.get('auth_user')?.value);
 
   const publicPages = ['/login', '/register'];
@@ -83,6 +89,11 @@ export async function middleware(req: NextRequest) {
   }
   
   if (publicApi.some(p => pathname.startsWith(p))) {
+    return NextResponse.next();
+  }
+
+  // Permitir acceso a la API de desarrollo sin autenticación
+  if (pathname.startsWith('/api/dev/')) {
     return NextResponse.next();
   }
 

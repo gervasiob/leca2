@@ -63,6 +63,11 @@ export async function middleware(req: NextRequest) {
   
   const { nextUrl, cookies } = req;
   const pathname = nextUrl.pathname;
+  
+  // Redirigir la ruta raíz a /login
+  if (pathname === '/') {
+    return NextResponse.redirect(new URL('/login', nextUrl));
+  }
 
   // Rutas que se deben ignorar siempre
   const alwaysPublic = ['/dev/db-viewer'];

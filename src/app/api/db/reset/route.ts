@@ -4,7 +4,7 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
-export async function POST() {
+async function handleDbReset() {
   if (process.env.NODE_ENV === 'production') {
     return NextResponse.json(
       { ok: false, error: 'Esta acción solo está permitida en desarrollo.' },
@@ -21,7 +21,6 @@ export async function POST() {
     if (stderr && !stderr.includes('generated')) {
       // A veces prisma generate imprime a stderr, lo ignoramos si es solo eso.
       console.error('Error durante prisma migrate reset:', stderr);
-      // No lanzamos error si solo hay stderr, a veces hay warnings.
     }
     
     console.log('Resultado de prisma migrate reset:', stdout);
@@ -40,4 +39,12 @@ export async function POST() {
       { status: 500 }
     );
   }
+}
+
+export async function POST() {
+  return handleDbReset();
+}
+
+export async function GET() {
+  return handleDbReset();
 }

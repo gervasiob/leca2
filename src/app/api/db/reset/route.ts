@@ -16,17 +16,17 @@ async function handleDbReset() {
   }
 
   try {
-    console.log('Iniciando reseteo de la base de datos...');
+    console.log('Iniciando reseteo de la base de datos via npm script...');
     
-    // Usamos --force para evitar la pregunta interactiva que bloquearía el script.
-    const { stdout, stderr } = await execAsync('npx prisma migrate reset --force');
+    // Ejecuta el script 'db:reset' definido en package.json
+    const { stdout, stderr } = await execAsync('npm run db:reset');
     
     if (stderr && !stderr.includes('generated')) {
       // A veces prisma generate imprime a stderr, lo ignoramos si es solo eso.
-      console.error('Error durante prisma migrate reset:', stderr);
+      console.error('Error durante npm run db:reset:', stderr);
     }
     
-    console.log('Resultado de prisma migrate reset:', stdout);
+    console.log('Resultado de npm run db:reset:', stdout);
     return NextResponse.json({
       ok: true,
       message: 'La base de datos ha sido reseteada y poblada con éxito.',
@@ -38,7 +38,7 @@ async function handleDbReset() {
     const message = e instanceof Error ? e.message : 'Error desconocido';
     console.error('Error al ejecutar el reseteo de la base de datos:', message);
     return NextResponse.json(
-      { ok: false, error: 'Error al ejecutar npx prisma migrate reset.', details: message },
+      { ok: false, error: 'Error al ejecutar npm run db:reset.', details: message },
       { status: 500 }
     );
   }

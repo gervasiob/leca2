@@ -44,7 +44,7 @@ async function getClients() {
 Para facilitar el desarrollo, se han creado algunas rutas de API que no están protegidas por el middleware. **No deben ser usadas o expuestas en producción.**
 
 - **`GET /api/db/reset`**:
-  Al visitar esta URL en tu navegador, se ejecutará el comando `npx prisma migrate reset`. Esto **borrará todos los datos** de la base de datos, aplicará todas las migraciones desde cero y ejecutará el seeder para poblarla con datos de prueba. Es una forma rápida de reiniciar la base de datos a un estado conocido.
+  Al visitar esta URL en tu navegador, se ejecutará el comando `npx prisma migrate reset --force`. Esto **borrará todos los datos** de la base de datos, aplicará todas las migraciones desde cero y ejecutará el seeder para poblarla con datos de prueba. Es una forma rápida de reiniciar la base de datos a un estado conocido.
 
 - **`POST /api/dev/db-viewer`**:
   Esta ruta es utilizada por la página `/dev/db-viewer` para obtener y mostrar el contenido de cualquier tabla de la base de datos.

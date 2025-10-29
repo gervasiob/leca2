@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -18,7 +18,8 @@ import {
 } from '@/components/ui/select';
 import { PageHeader } from '@/components/page-header';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ShieldAlert } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const tableNames = ['user', 'role', 'client', 'product', 'order', 'orderDetail', 'claim'];
 
@@ -27,6 +28,24 @@ export default function DbViewerPage() {
   const [tableData, setTableData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAuthorized, setAuthorized] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/me');
+        const data = await res.json();
+        if (data.ok && data.user?.role === 'System') {
+          setAuthorized(true);
+        } else {
+          setAuthorized(false);
+        }
+      } catch {
+        setAuthorized(false);
+      }
+    };
+    checkAuth();
+  }, []);
 
   const fetchData = async (tableName: string) => {
     if (!tableName) return;
@@ -55,6 +74,28 @@ export default function DbViewerPage() {
     setSelectedTable(tableName);
     fetchData(tableName);
   };
+  
+  if (isAuthorized === null) {
+    return (
+        <div className="flex h-[80vh] w-full items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+    );
+  }
+
+  if (!isAuthorized) {
+    return (
+      <div className="p-8">
+        <Alert variant="destructive">
+          <ShieldAlert className="h-4 w-4" />
+          <AlertTitle>Acceso Denegado</AlertTitle>
+          <AlertDescription>
+            No tienes permisos para acceder a esta página. Solo los usuarios con rol 'System' pueden verla.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8">

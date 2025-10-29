@@ -44,9 +44,10 @@ const roleVariantMap: { [key: string]: 'default' | 'secondary' | 'outline' } = {
     'Ventas': 'secondary',
     'Producción': 'outline',
     'Invitado': 'outline',
+    'System': 'destructive',
   };
 
-const ENUM_ROLES = ['Admin', 'Ventas', 'Producción', 'Invitado'];
+const ENUM_ROLES = ['Admin', 'Ventas', 'Producción', 'Invitado', 'System'];
 
 const toEnumRole = (name: string) => ENUM_ROLES.find(r => r.toLowerCase() === name.toLowerCase());
 

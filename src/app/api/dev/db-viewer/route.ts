@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { cookies } from 'next/headers';
+import type { User } from '@/lib/types';
 
 // Lista de modelos permitidos para evitar acceso arbitrario
 const allowedModels = [
@@ -14,16 +16,20 @@ const allowedModels = [
 ];
 
 export async function POST(request: Request) {
-  // Se cambia la condición para que la ruta de desarrollo solo esté disponible
-  // cuando el middleware de producción está deshabilitado.
-  if (process.env.MIDDLEWARE_ENABLED === 'true') {
-    return NextResponse.json(
-      { ok: false, error: 'This endpoint is only available when the middleware is disabled.' },
-      { status: 403 }
-    );
-  }
-
   try {
+    const cookieStore = await cookies();
+    const authUserCookie = cookieStore.get('auth_user')?.value;
+    
+    if (!authUserCookie) {
+      return NextResponse.json({ ok: false, error: 'Authentication required.' }, { status: 401 });
+    }
+
+    const user: User = JSON.parse(authUserCookie);
+
+    if (user.role !== 'System') {
+      return NextResponse.json({ ok: false, error: 'Access denied. System role required.' }, { status: 403 });
+    }
+
     const body = await request.json();
     const tableName = body.tableName;
 

@@ -28,6 +28,7 @@ import {
   UserCog,
   Building2,
   BarChart3,
+  Database,
 } from 'lucide-react';
 import { PaintBucketIcon } from '../icons';
 import { cn } from '@/lib/utils';
@@ -57,6 +58,7 @@ const settingsLinks = [
   { href: '/settings/users', icon: User, label: 'Usuarios' },
   { href: '/settings/roles', icon: UserCog, label: 'Roles y Permisos' },
   { href: '/settings/products', icon: List, label: 'Tablas de Productos' },
+  { href: '/dev/db-viewer', icon: Database, label: 'DB Viewer', system: true },
 ];
 
 export function Sidebar() {
@@ -208,14 +210,17 @@ export function Sidebar() {
                 <TooltipContent side="right">Configuración</TooltipContent>
               </Tooltip>
               <DropdownMenuContent side="right" align="start">
-                {settingsLinks.map(({ href, icon: Icon, label }) => (
-                  <DropdownMenuItem key={href} asChild>
-                    <Link href={href} className="flex items-center gap-2">
-                      <Icon className="h-4 w-4" />
-                      <span>{label}</span>
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
+                {settingsLinks.map(({ href, icon: Icon, label, system }) => {
+                    if (system && !can('DB Viewer')) return null;
+                    return (
+                        <DropdownMenuItem key={href} asChild>
+                            <Link href={href} className="flex items-center gap-2">
+                                <Icon className="h-4 w-4" />
+                                <span>{label}</span>
+                            </Link>
+                        </DropdownMenuItem>
+                    )
+                })}
               </DropdownMenuContent>
             </DropdownMenu>
           )}

@@ -23,9 +23,9 @@ import {
   List,
   FileText,
   UserCog,
-  LogOut,
   Building2,
   BarChart3,
+  Database,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -63,6 +63,7 @@ const settingsLinks = [
   { href: '/settings/users', icon: User, label: 'Usuarios' },
   { href: '/settings/roles', icon: UserCog, label: 'Roles y Permisos' },
   { href: '/settings/products', icon: List, label: 'Tablas de Productos' },
+  { href: '/dev/db-viewer', icon: Database, label: 'DB Viewer', system: true },
 ];
 
 export function Header() {
@@ -199,7 +200,10 @@ export function Header() {
                 </AccordionTrigger>
                 <AccordionContent className="pl-8">
                   <nav className="grid gap-2">
-                    {settingsLinks.map(({ href, icon: Icon, label }) => renderLink(href, Icon, label))}
+                    {settingsLinks.map(({ href, icon: Icon, label, system }) => {
+                        if (system && !can('DB Viewer')) return null;
+                        return renderLink(href, Icon, label)
+                    })}
                   </nav>
                 </AccordionContent>
               </AccordionItem>

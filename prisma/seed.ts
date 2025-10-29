@@ -37,6 +37,7 @@ const roleNameToEnum = (roleName: string): UserRole => {
     Sales: UserRole.Ventas,
     Production: UserRole.Produccion,
     Invitado: UserRole.Invitado,
+    System: UserRole.System,
   };
   return mapping[roleName] || UserRole.Invitado;
 };
@@ -48,11 +49,12 @@ const roleDisplayName = (roleName: string): string => {
     Sales: 'Ventas',
     Production: 'Produccion',
     Invitado: 'Invitado',
+    System: 'System',
   };
   return mapping[roleName] || roleName;
 };
 const passwordForRole = (
-  role: 'Admin' | 'Sales' | 'Production' | 'Invitado'
+  role: 'Admin' | 'Sales' | 'Production' | 'Invitado' | 'System'
 ) =>
   role === 'Admin'
     ? 'admin'
@@ -60,6 +62,8 @@ const passwordForRole = (
     ? 'ventas'
     : role === 'Production'
     ? 'produccion'
+    : role === 'System'
+    ? 'system'
     : 'invitado';
 
 async function main() {
@@ -88,7 +92,7 @@ async function main() {
       console.warn(`Role "${user.role}" not found for user "${user.name}". Skipping.`);
       continue;
     }
-    const password = passwordForRole(user.role as 'Admin' | 'Sales' | 'Production' | 'Invitado');
+    const password = passwordForRole(user.role as 'Admin' | 'Sales' | 'Production' | 'Invitado' | 'System');
     const passwordHash = await bcrypt.hash(password, 10);
 
     await prisma.user.upsert({

@@ -3,6 +3,7 @@ export const ROLE_NAME_MAP: Record<string, string> = {
   Sales: 'Ventas',
   Production: 'Produccion',
   Invitado: 'Invitado',
+  System: 'System',
 };
 
 export const SCREENS_TO_PATHS: Record<string, string[]> = {
@@ -15,6 +16,7 @@ export const SCREENS_TO_PATHS: Record<string, string[]> = {
   'Listas de Precios': ['/price-lists'],
   'Configuración': ['/settings', '/settings/users', '/settings/roles', '/settings/products'],
   'Reportes': ['/report'],
+  'DB Viewer': ['/dev/db-viewer'],
 };
 
 export const normalizeName = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();

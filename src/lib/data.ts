@@ -57,6 +57,7 @@ export const users: User[] = [
     { id: 1, name: 'admin', email: 'admin@fabrica.com', role: 'Admin', lastLogin: new Date('2023-11-20T10:00:00Z') },
     { id: 2, name: 'vendedor_estrella', email: 'ventas@fabrica.com', role: 'Sales', lastLogin: new Date('2023-11-19T14:30:00Z') },
     { id: 3, name: 'jefe_produccion', email: 'produccion@fabrica.com', role: 'Production', lastLogin: new Date('2023-11-21T08:00:00Z') },
+    { id: 4, name: 'system', email: 'system@fabrica.com', role: 'System', lastLogin: new Date() },
 ];
 
 export const screens = [
@@ -69,11 +70,13 @@ export const screens = [
     'Reclamos',
     'Configuración',
     'Reportes',
+    'DB Viewer',
 ];
 
 export const roles: Role[] = [
-    { id: 1, name: 'Admin', permissions: [...screens] },
+    { id: 1, name: 'Admin', permissions: [...screens.filter(s => s !== 'DB Viewer')] },
     { id: 2, name: 'Ventas', permissions: ['Cuentas por Cobrar', 'Ventas', 'Remitos', 'Listas de Precios', 'Reclamos'] },
     { id: 3, name: 'Produccion', permissions: ['Produccion', 'Remitos'] },
     { id: 4, name: 'Invitado', permissions: [] },
+    { id: 5, name: 'System', permissions: [...screens] },
 ];

@@ -49,10 +49,11 @@ export const config = {
     /*
      * Match all request paths except for the ones starting with:
      * - api/dev (para endpoints de desarrollo)
+     * - dev (para páginas de desarrollo)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!api/dev|_next/static|_next/image|favicon.ico|dev/db-viewer).*)',
+    '/((?!api/dev|dev/|_next/static|_next/image|favicon.ico).*)',
   ],
 };

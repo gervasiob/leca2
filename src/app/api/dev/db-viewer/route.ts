@@ -14,9 +14,11 @@ const allowedModels = [
 ];
 
 export async function POST(request: Request) {
-  if (process.env.NODE_ENV === 'production') {
+  // Se cambia la condición para que la ruta de desarrollo solo esté disponible
+  // cuando el middleware de producción está deshabilitado.
+  if (process.env.MIDDLEWARE_ENABLED === 'true') {
     return NextResponse.json(
-      { ok: false, error: 'This endpoint is only available in development.' },
+      { ok: false, error: 'This endpoint is only available when the middleware is disabled.' },
       { status: 403 }
     );
   }

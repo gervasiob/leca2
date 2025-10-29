@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
+import { Header } from '@/components/layout/header';
+import { Sidebar } from '@/components/layout/sidebar';
 
 export const metadata: Metadata = {
   title: 'Gestor de Fábrica de Pintura',

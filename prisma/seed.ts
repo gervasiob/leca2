@@ -35,7 +35,7 @@ const passwordForRole = (
   role: UserRole
 ) => {
   switch (role) {
-    case UserRole.Admin: return 'admin';
+    case UserRole.Admin: return 'admin1';
     case UserRole.Sales: return 'ventas';
     case UserRole.Production: return 'produccion';
     case UserRole.System: return 'system';

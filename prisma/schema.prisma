@@ -10,31 +10,45 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Enum for user roles
+enum UserRole {
+  Admin
+  Ventas
+  Produccion
+  Invitado
+  System
+}
+
+// User model
 model User {
-  id           Int      @id @default(autoincrement())
+  id           Int        @id @default(autoincrement())
+  email        String     @unique
   name         String
-  email        String   @unique
-  role         UserRole @default(Invitado)
-  roleId       Int
   passwordHash String
-  lastLogin    DateTime @default(now())
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  roleRel      Role     @relation(fields: [roleId], references: [id])
+  role         UserRole
+  lastLogin    DateTime?
   orders       Order[]
+  roleId       Int
+  roleRow      Role       @relation(fields: [roleId], references: [id])
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   @@map("users")
 }
 
+// Role model
 model Role {
-  id          Int      @id @default(autoincrement())
+  id          Int      @id @default(autoincession())
   name        String   @unique
   permissions String[]
   users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@map("roles")
 }
 
+// Client model
 model Client {
   id                 Int           @id @default(autoincrement())
   name               String
@@ -44,101 +58,110 @@ model Client {
   email              String        @unique
   discountLevel      Int
   canEditPrices      Boolean
-  commissionFee      Float
+  commissionFee      Decimal
   sellsOnInstallments Boolean
   orders             Order[]
   orderDetails       OrderDetail[]
   claims             Claim[]
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 
   @@map("clients")
 }
 
+// Product model
 model Product {
-  id          Int      @id @default(autoincrement())
+  id          Int           @id @default(autoincrement())
   name        String
   type        String
   application String
   colors      String[]
   status      String
   orderDetails OrderDetail[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   @@map("products")
 }
 
+// Order model
 model Order {
   id          Int           @id @default(autoincrement())
+  client      Client        @relation(fields: [clientId], references: [id])
   clientId    Int
+  user        User          @relation(fields: [userId], references: [id])
   userId      Int
   status      String
-  totalAmount Decimal       @db.Decimal(10, 2)
-  orderDate   DateTime      @default(now())
+  totalAmount Decimal
+  orderDate   DateTime
   isPartial   Boolean
-  client      Client        @relation(fields: [clientId], references: [id])
-  user        User          @relation(fields: [userId], references: [id])
   orderDetails OrderDetail[]
   claims      Claim[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   @@map("orders")
 }
 
+// OrderDetail model
 model OrderDetail {
-  id                 Int      @id @default(autoincrement())
+  id                 Int              @id @default(autoincrement())
+  product            Product          @relation(fields: [productId], references: [id])
   productId          Int
   quantity           Int
-  unitPrice          Decimal  @db.Decimal(10, 2)
-  totalPrice         Decimal  @db.Decimal(10, 2)
+  unitPrice          Decimal
+  totalPrice         Decimal
+  order              Order            @relation(fields: [orderId], references: [id])
   orderId            Int
+  client             Client           @relation(fields: [clientId], references: [id])
   clientId           Int
   cartId             String?
   paymentId          String?
   deliveryNoteId     String?
+  batch              ProductionBatch? @relation(fields: [batchId], references: [id])
   batchId            Int?
   status             String
-  isProduced         Boolean
+  isProduced         Boolean          @default(false)
   productionDate     DateTime?
   productionDoneDate DateTime?
   dispatchReadyDate  DateTime?
   dispatchedDate     DateTime?
   deliveryNoteDate   DateTime?
-  order              Order    @relation(fields: [orderId], references: [id])
-  client             Client   @relation(fields: [clientId], references: [id])
-  product            Product  @relation(fields: [productId], references: [id])
-  batch              ProductionBatch? @relation(fields: [batchId], references: [id])
-  claim              Claim[]
+  claim              Claim?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 
   @@map("order_details")
 }
 
+// ProductionBatch model
 model ProductionBatch {
   id             Int           @id @default(autoincrement())
   batchNumber    String        @unique
   productionDate DateTime
   plannedDate    DateTime
   status         String
-  items          OrderDetail[]
+  orderDetails   OrderDetail[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   @@map("production_batches")
 }
 
+// Claim model
 model Claim {
-  id            Int      @id @default(autoincrement())
-  orderDetailId Int      @unique
+  id            Int         @id @default(autoincrement())
+  orderDetail   OrderDetail @relation(fields: [orderDetailId], references:海外のお客さまとの商談経験を活かした、柔軟なコミュニケーションが強みです。),[id])
+  orderDetailId Int         @unique
+  order         Order       @relation(fields: [orderId], references: [id])
   orderId       Int
+  client        Client      @relation(fields: [clientId], references: [id])
   clientId      Int
   reason        String
   status        String
   resolution    String?
-  createdAt     DateTime @default(now())
-  orderDetail   OrderDetail @relation(fields: [orderDetailId], references: [id])
-  order         Order       @relation(fields: [orderId], references: [id])
-  client        Client      @relation(fields: [clientId], references: [id])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
   @@map("claims")
-}
-
-enum UserRole {
-  Admin
-  Ventas
-  Produccion
-  Invitado
 }

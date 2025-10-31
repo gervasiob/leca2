@@ -55,8 +55,8 @@ export const claims: Claim[] = [
 // Default user: admin, password: admin
 export const users: User[] = [
     { id: 1, name: 'admin', email: 'admin@fabrica.com', role: 'Admin', lastLogin: new Date('2023-11-20T10:00:00Z') },
-    { id: 2, name: 'vendedor_estrella', email: 'ventas@fabrica.com', role: 'Sales', lastLogin: new Date('2023-11-19T14:30:00Z') },
-    { id: 3, name: 'jefe_produccion', email: 'produccion@fabrica.com', role: 'Production', lastLogin: new Date('2023-11-21T08:00:00Z') },
+    { id: 2, name: 'vendedor_estrella', email: 'ventas@fabrica.com', role: 'Ventas', lastLogin: new Date('2023-11-19T14:30:00Z') },
+    { id: 3, name: 'jefe_produccion', email: 'produccion@fabrica.com', role: 'Produccion', lastLogin: new Date('2023-11-21T08:00:00Z') },
     { id: 4, name: 'system', email: 'system@fabrica.com', role: 'System', lastLogin: new Date() },
 ];
 

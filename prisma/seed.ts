@@ -30,37 +30,15 @@ import { Decimal } from '@prisma/client/runtime/library';
 
 const prisma = new PrismaClient();
 
-// Helper to map role names from data file to the enum in Prisma schema
-const roleNameToEnum = (roleName: string): UserRole => {
-  const mapping: { [key: string]: UserRole } = {
-    Admin: UserRole.Admin,
-    Sales: UserRole.Ventas,
-    Production: UserRole.Produccion,
-    Invitado: UserRole.Invitado,
-    System: UserRole.System,
-  };
-  return mapping[roleName] || UserRole.Invitado;
-};
 
-// Map display names used in roles seed (es/en)
-const roleDisplayName = (roleName: string): string => {
-  const mapping: Record<string, string> = {
-    Admin: 'Admin',
-    Sales: 'Ventas',
-    Production: 'Produccion',
-    Invitado: 'Invitado',
-    System: 'System',
-  };
-  return mapping[roleName] || roleName;
-};
 const passwordForRole = (
-  role: 'Admin' | 'Sales' | 'Production' | 'Invitado' | 'System'
+  role: 'Admin' | 'Ventas' | 'Produccion' | 'Invitado' | 'System'
 ) =>
   role === 'Admin'
     ? 'admin'
-    : role === 'Sales'
+    : role === 'Ventas'
     ? 'ventas'
-    : role === 'Production'
+    : role === 'Produccion'
     ? 'produccion'
     : role === 'System'
     ? 'system'
@@ -95,13 +73,13 @@ async function main() {
   // 2. Seed Users
   for (const user of seedUsers) {
     const role = await prisma.role.findFirst({
-      where: { name: { equals: roleDisplayName(user.role), mode: 'insensitive' } },
+      where: { name: { equals: user.role, mode: 'insensitive' } },
     });
     if (!role) {
       console.warn(`Role "${user.role}" not found for user "${user.name}". Skipping.`);
       continue;
     }
-    const password = passwordForRole(user.role as 'Admin' | 'Sales' | 'Production' | 'Invitado' | 'System');
+    const password = passwordForRole(user.role as 'Admin' | 'Ventas' | 'Produccion' | 'Invitado' | 'System');
     const passwordHash = await bcrypt.hash(password, 10);
 
     await prisma.user.create({
@@ -109,7 +87,7 @@ async function main() {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: roleNameToEnum(user.role),
+        role: user.role as UserRole,
         lastLogin: user.lastLogin,
         passwordHash,
         roleId: role.id,

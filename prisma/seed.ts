@@ -68,13 +68,22 @@ const passwordForRole = (
 
 async function main() {
   console.log('Start seeding...');
+  
+  // Clean up existing data
+  await prisma.claim.deleteMany({});
+  await prisma.orderDetail.deleteMany({});
+  await prisma.productionBatch.deleteMany({});
+  await prisma.order.deleteMany({});
+  await prisma.product.deleteMany({});
+  await prisma.client.deleteMany({});
+  await prisma.user.deleteMany({});
+  await prisma.role.deleteMany({});
+  console.log('Cleared existing data.');
 
   // 1. Seed Roles
   for (const role of seedRoles) {
-    await prisma.role.upsert({
-      where: { name: role.name },
-      update: { permissions: role.permissions },
-      create: {
+    await prisma.role.create({
+      data: {
         id: role.id,
         name: role.name,
         permissions: role.permissions,
@@ -95,16 +104,8 @@ async function main() {
     const password = passwordForRole(user.role as 'Admin' | 'Sales' | 'Production' | 'Invitado' | 'System');
     const passwordHash = await bcrypt.hash(password, 10);
 
-    await prisma.user.upsert({
-      where: { email: user.email },
-      update: {
-        name: user.name,
-        role: roleNameToEnum(user.role),
-        lastLogin: user.lastLogin,
-        passwordHash,
-        roleId: role.id,
-      },
-      create: {
+    await prisma.user.create({
+      data: {
         id: user.id,
         name: user.name,
         email: user.email,
@@ -119,20 +120,8 @@ async function main() {
 
   // 3. Seed Clients
   for (const client of seedClients) {
-    await prisma.client.upsert({
-      where: { id: client.id },
-      update: { 
-        name: client.name,
-        cuit: client.cuit,
-        address: client.address,
-        phone: client.phone,
-        email: client.email,
-        discountLevel: client.discountLevel,
-        canEditPrices: client.canEditPrices,
-        commissionFee: client.commissionFee,
-        sellsOnInstallments: client.sellsOnInstallments,
-      },
-      create: { 
+    await prisma.client.create({
+      data: { 
         id: client.id,
         name: client.name,
         cuit: client.cuit,
@@ -150,16 +139,8 @@ async function main() {
 
   // 4. Seed Products
   for (const product of seedProducts) {
-    await prisma.product.upsert({
-      where: { id: product.id },
-      update: { 
-        name: product.name,
-        type: product.type,
-        application: product.application,
-        colors: product.colors,
-        status: product.status,
-      },
-      create: { 
+    await prisma.product.create({
+      data: { 
         id: product.id,
         name: product.name,
         type: product.type,
@@ -181,17 +162,8 @@ async function main() {
       continue;
     }
 
-    await prisma.order.upsert({
-      where: { id: order.id },
-      update: {
-        clientId: order.clientId,
-        userId: order.userId,
-        status: order.status,
-        totalAmount: new Decimal(order.totalAmount),
-        orderDate: order.orderDate,
-        isPartial: order.isPartial,
-      },
-      create: {
+    await prisma.order.create({
+      data: {
         id: order.id,
         clientId: order.clientId,
         userId: order.userId,
@@ -233,15 +205,8 @@ async function main() {
 
   // 7. Seed Production Batches
   for (const batch of seedBatches) {
-    await prisma.productionBatch.upsert({
-      where: { id: batch.id },
-      update: {
-        batchNumber: batch.batchNumber,
-        productionDate: batch.productionDate,
-        plannedDate: batch.plannedDate,
-        status: batch.status,
-      },
-      create: {
+    await prisma.productionBatch.create({
+      data: {
         id: batch.id,
         batchNumber: batch.batchNumber,
         productionDate: batch.productionDate,
@@ -254,28 +219,8 @@ async function main() {
 
   // 8. Seed Order Details
   for (const detail of seedDetails) {
-    await prisma.orderDetail.upsert({
-      where: { id: detail.id },
-      update: {
-        productId: detail.productId,
-        quantity: detail.quantity,
-        unitPrice: new Decimal(detail.unitPrice),
-        totalPrice: new Decimal(detail.totalPrice),
-        orderId: detail.orderId,
-        clientId: detail.clientId,
-        cartId: detail.cartId ?? null,
-        paymentId: detail.paymentId ?? null,
-        deliveryNoteId: detail.deliveryNoteId ?? null,
-        batchId: detail.batchId ?? null,
-        status: detail.status,
-        isProduced: detail.isProduced,
-        productionDate: detail.productionDate ?? null,
-        productionDoneDate: detail.productionDoneDate ?? null,
-        dispatchReadyDate: detail.dispatchReadyDate ?? null,
-        dispatchedDate: detail.dispatchedDate ?? null,
-        deliveryNoteDate: detail.deliveryNoteDate ?? null,
-      },
-      create: {
+    await prisma.orderDetail.create({
+      data: {
         id: detail.id,
         productId: detail.productId,
         quantity: detail.quantity,
@@ -301,18 +246,8 @@ async function main() {
 
   // 9. Seed Claims
   for (const claim of seedClaims) {
-    await prisma.claim.upsert({
-        where: { id: claim.id },
-        update: {
-            orderDetailId: claim.orderDetailId,
-            orderId: claim.orderId,
-            clientId: claim.clientId,
-            reason: claim.reason,
-            status: claim.status,
-            resolution: claim.resolution ?? null,
-            createdAt: claim.createdAt,
-        },
-        create: {
+    await prisma.claim.create({
+        data: {
             id: claim.id,
             orderDetailId: claim.orderDetailId,
             orderId: claim.orderId,

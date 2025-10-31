@@ -76,8 +76,8 @@ export const screens = [
 
 export const roles: Role[] = [
     { id: 1, name: 'Admin', permissions: [...screens.filter(s => s !== 'DB Viewer')] },
-    { id: 2, name: 'Ventas', permissions: ['Tablero', 'Cuentas por Cobrar', 'Ventas', 'Remitos', 'Listas de Precios', 'Reclamos', 'Reportes'] },
-    { id: 3, name: 'Producción', permissions: ['Producción', 'Remitos'] },
-    { id: 4, name: 'Invitado', permissions: [] },
+    { id: 2, name: 'Sales', permissions: ['Tablero', 'Cuentas por Cobrar', 'Ventas', 'Remitos', 'Listas de Precios', 'Reclamos', 'Reportes'] },
+    { id: 3, name: 'Production', permissions: ['Producción', 'Remitos'] },
+    { id: 4, name: 'Guest', permissions: [] },
     { id: 5, name: 'System', permissions: [...screens] },
 ];

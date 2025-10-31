@@ -38,21 +38,21 @@ export async function POST(request: Request) {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const invitadoRole = await prisma.role.findFirst({
-        where: { name: 'Invitado' }
+    const guestRole = await prisma.role.findFirst({
+        where: { name: 'Guest' } // Standardize to English
     });
 
-    if (!invitadoRole) {
-        return NextResponse.json({ok: false, error: "El rol 'Invitado' no existe. Ejecute el seeder."}, {status: 500});
+    if (!guestRole) {
+        return NextResponse.json({ok: false, error: "El rol 'Guest' no existe. Ejecute el seeder."}, {status: 500});
     }
 
     const newUser = await prisma.user.create({
         data: {
             name,
             email,
-            role: UserRole.Invitado,
+            role: UserRole.Guest, // This is the 'Guest' enum value
             passwordHash,
-            roleId: invitadoRole.id,
+            roleId: guestRole.id,
             lastLogin: new Date(),
         }
     });

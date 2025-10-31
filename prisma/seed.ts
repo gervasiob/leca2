@@ -58,12 +58,12 @@ async function main() {
   await prisma.client.deleteMany({});
   console.log('Cleared existing data.');
 
-  // 1. Seed Roles
+  // 1. Seed Roles (now using English names from data.ts)
   for (const role of seedRoles) {
     await prisma.role.create({
       data: {
         id: role.id,
-        name: role.name,
+        name: role.name, // Will be 'Admin', 'Sales', etc.
         permissions: role.permissions,
       },
     });
@@ -72,20 +72,13 @@ async function main() {
 
   // 2. Seed Users
   for (const user of seedUsers) {
-    const roleNameMap: Record<UserRole, string> = {
-      [UserRole.Admin]: 'Admin',
-      [UserRole.Sales]: 'Ventas',
-      [UserRole.Production]: 'Producción',
-      [UserRole.Guest]: 'Invitado',
-      [UserRole.System]: 'System',
-    }
-    const uiRoleName = roleNameMap[user.role];
+    // The role name in seedUsers is now the English name, which is the same as the role enum.
     const roleInDb = await prisma.role.findFirst({
-      where: { name: { equals: uiRoleName, mode: 'insensitive' } },
+      where: { name: { equals: user.role, mode: 'insensitive' } },
     });
 
     if (!roleInDb) {
-      console.warn(`Role "${uiRoleName}" not found in DB. Skipping user "${user.name}".`);
+      console.warn(`Role "${user.role}" not found in DB. Skipping user "${user.name}".`);
       continue;
     }
     const password = passwordForRole(user.role);
@@ -96,7 +89,7 @@ async function main() {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        role: user.role, // This is the English enum value
         lastLogin: user.lastLogin,
         passwordHash,
         roleId: roleInDb.id,

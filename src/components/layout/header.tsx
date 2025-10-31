@@ -40,7 +40,17 @@ import {
 } from '../ui/accordion';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
-import { normalizeName, ROLE_NAME_MAP } from '@/lib/rbac';
+import { normalizeName } from '@/lib/rbac';
+import { UserRole } from '@/lib/types';
+
+
+const ROLE_UI_NAME_MAP: Record<UserRole, string> = {
+  [UserRole.Admin]: 'Admin',
+  [UserRole.Sales]: 'Ventas',
+  [UserRole.Production]: 'Producción',
+  [UserRole.Guest]: 'Invitado',
+  [UserRole.System]: 'System',
+};
 
 const mainNavLinks = [
   { href: '/dashboard', icon: Home, label: 'Tablero' },
@@ -83,12 +93,12 @@ export function Header() {
           setAllowedScreens([]);
           return;
         }
-        const enumRole: string = meData.user.role as string;
-        const roleName = ROLE_NAME_MAP[enumRole] ?? enumRole;
+        const userRoleEnum: UserRole = meData.user.role as UserRole;
+        
         const rolesRes = await fetch('/api/roles', { credentials: 'include' });
         const rolesData = await rolesRes.json();
         const role = Array.isArray(rolesData?.roles)
-          ? rolesData.roles.find((r: any) => normalizeName(r.name) === normalizeName(roleName))
+          ? rolesData.roles.find((r: any) => normalizeName(r.name) === normalizeName(userRoleEnum))
           : null;
         setAllowedScreens(role?.permissions ?? []);
       } catch {

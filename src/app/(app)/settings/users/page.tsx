@@ -40,6 +40,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { UserRole as UserRoleEnum } from '@prisma/client';
 
+const UI_ROLE_MAP: Record<UserRoleEnum, string> = {
+  [UserRoleEnum.Admin]: 'Admin',
+  [UserRoleEnum.Sales]: 'Ventas',
+  [UserRoleEnum.Production]: 'Producción',
+  [UserRoleEnum.Guest]: 'Invitado',
+  [UserRoleEnum.System]: 'System',
+};
+
+const ENUM_ROLE_MAP: Record<string, UserRoleEnum> = {
+  'Admin': UserRoleEnum.Admin,
+  'Ventas': UserRoleEnum.Sales,
+  'Producción': UserRoleEnum.Production,
+  'Invitado': UserRoleEnum.Guest,
+  'System': UserRoleEnum.System,
+}
+
 const roleVariantMap: { [key: string]: 'default' | 'secondary' | 'outline' | 'destructive' } = {
     'Admin': 'default',
     'Ventas': 'secondary',
@@ -50,14 +66,14 @@ const roleVariantMap: { [key: string]: 'default' | 'secondary' | 'outline' | 'de
 
 const UI_ROLES = ['Admin', 'Ventas', 'Producción', 'Invitado', 'System'];
 
-type UserRow = { id: number; name: string; email: string; role: string; lastLogin: Date | null };
+type UserRow = { id: number; name: string; email: string; role: UserRoleEnum; lastLogin: Date | null };
 
 export default function UserSettingsPage() {
   const { toast } = useToast();
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
  
-  const [availableRoles, setAvailableRoles] = useState<string[]>(UI_ROLES);
+  const [availableRoles, setAvailableRoles] = useState<string[]>([]);
   useEffect(() => {
     const loadRoles = async () => {
       try {
@@ -65,10 +81,14 @@ export default function UserSettingsPage() {
         const data = await res.json();
         if (res.ok && Array.isArray(data?.roles)) {
           const names = data.roles.map((r: any) => String(r.name));
-          if (names.length > 0) setAvailableRoles(names);
+          if (names.length > 0) {
+            // We store the English names but will display them in Spanish
+            setAvailableRoles(names);
+          }
         }
       } catch {
-        // fallback to UI_ROLES
+        // fallback to hardcoded roles if API fails
+        setAvailableRoles(Object.values(UserRoleEnum));
       }
     };
     loadRoles();
@@ -78,7 +98,7 @@ export default function UserSettingsPage() {
   const [editUser, setEditUser] = useState<UserRow | null>(null);
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
-  const [editRole, setEditRole] = useState('Invitado');
+  const [editRole, setEditRole] = useState<UserRoleEnum>(UserRoleEnum.Guest);
  
   useEffect(() => {
     const loadUsers = async () => {
@@ -86,18 +106,11 @@ export default function UserSettingsPage() {
         const res = await fetch('/api/users', { credentials: 'include' });
         const data = await res.json();
         if (res.ok && Array.isArray(data?.users)) {
-           const roleNameMap: Record<string, string> = {
-            [UserRoleEnum.Admin]: 'Admin',
-            [UserRoleEnum.Sales]: 'Ventas',
-            [UserRoleEnum.Production]: 'Producción',
-            [UserRoleEnum.Guest]: 'Invitado',
-            [UserRoleEnum.System]: 'System',
-          };
           const parsed = data.users.map((u: any) => ({
             id: u.id,
             name: u.name,
             email: u.email,
-            role: roleNameMap[u.role] || u.role,
+            role: u.role as UserRoleEnum, // role from DB is already the enum value
             lastLogin: u.lastLogin ? new Date(u.lastLogin) : null,
           }));
           setUsers(parsed);
@@ -134,12 +147,12 @@ export default function UserSettingsPage() {
       if (!res.ok || data?.ok === false) {
         throw new Error(data?.error || 'Error al actualizar usuario');
       }
-      const updated = data.user as { id: number; name: string; email: string; role: string; lastLogin?: string };
+      const updated = data.user as { id: number; name: string; email: string; role: UserRoleEnum; lastLogin?: string };
       setUsers(prev => prev.map(u => u.id === editUser.id ? ({
         id: updated.id,
         name: updated.name,
         email: updated.email,
-        role: String(updated.role),
+        role: updated.role,
         lastLogin: updated.lastLogin ? new Date(updated.lastLogin) : u.lastLogin,
       }) : u));
       setEditOpen(false);
@@ -179,12 +192,14 @@ export default function UserSettingsPage() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {users.map((user) => (
+                    {users.map((user) => {
+                      const uiRole = UI_ROLE_MAP[user.role] || user.role;
+                      return (
                         <TableRow key={user.id}>
                             <TableCell className="font-medium">{user.name}</TableCell>
                             <TableCell>{user.email}</TableCell>
                             <TableCell>
-                                <Badge variant={roleVariantMap[user.role] || 'default'}>{String(user.role)}</Badge>
+                                <Badge variant={roleVariantMap[uiRole] || 'default'}>{uiRole}</Badge>
                             </TableCell>
                             <TableCell>{user.lastLogin ? format(user.lastLogin, 'PPP') : '-'}</TableCell>
                             <TableCell>
@@ -203,7 +218,7 @@ export default function UserSettingsPage() {
                                 </DropdownMenu>
                             </TableCell>
                         </TableRow>
-                    ))}
+                    )})}
                 </TableBody>
             </Table>
             )}
@@ -227,13 +242,13 @@ export default function UserSettingsPage() {
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right">Rol</Label>
               <div className="col-span-3">
-                <Select value={editRole} onValueChange={setEditRole}>
+                <Select value={editRole} onValueChange={(value) => setEditRole(value as UserRoleEnum)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccione un rol" />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableRoles.map(r => (
-                      <SelectItem key={r} value={r}>{r}</SelectItem>
+                    {availableRoles.map(roleEnum => (
+                      <SelectItem key={roleEnum} value={roleEnum}>{UI_ROLE_MAP[roleEnum as UserRoleEnum] || roleEnum}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

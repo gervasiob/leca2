@@ -2,22 +2,6 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
 
-const UI_TO_ENUM_ROLE_MAP: Record<string, UserRole> = {
-  'Admin': UserRole.Admin,
-  'Ventas': UserRole.Sales,
-  'Producción': UserRole.Production,
-  'Invitado': UserRole.Guest,
-  'System': UserRole.System,
-};
-
-const ENUM_TO_UI_ROLE_MAP: Record<UserRole, string> = {
-  [UserRole.Admin]: 'Admin',
-  [UserRole.Sales]: 'Ventas',
-  [UserRole.Production]: 'Producción',
-  [UserRole.Guest]: 'Invitado',
-  [UserRole.System]: 'System',
-};
-
 export async function PATCH(request: Request, { params }: { params: { id: string } }) {
   try {
     const idNum = Number(params.id);
@@ -36,19 +20,19 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     if (email) data.email = email;
 
     if (roleInput) {
-      // The input from the UI can be either the English Enum or Spanish Name
-      const enumRole = (UI_TO_ENUM_ROLE_MAP as any)[roleInput] || Object.values(UserRole).find(r => r === roleInput);
+      // The input from the UI will be the English enum value
+      const enumRole = Object.values(UserRole).find(r => r === roleInput);
 
       if (!enumRole) {
         return NextResponse.json({ ok: false, error: `Rol inválido: ${roleInput}` }, { status: 400 });
       }
       data.role = enumRole;
 
-      const uiRoleName = ENUM_TO_UI_ROLE_MAP[enumRole];
-      const roleRow = await prisma.role.findFirst({ where: { name: uiRoleName } });
+      // Find the corresponding role row to get the roleId
+      const roleRow = await prisma.role.findFirst({ where: { name: enumRole } });
 
       if (!roleRow) {
-        return NextResponse.json({ ok: false, error: `El rol '${uiRoleName}' no existe en la tabla de roles. Ejecute el seeder.` }, { status: 400 });
+        return NextResponse.json({ ok: false, error: `El rol '${enumRole}' no existe en la tabla de roles. Ejecute el seeder.` }, { status: 400 });
       }
       data.roleId = roleRow.id;
     }
@@ -58,14 +42,13 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       data,
     });
     
-    const spanishRoleName = ENUM_TO_UI_ROLE_MAP[updated.role];
-
+    // The role is already the English enum value, which is what we want
     const userResponse = {
       id: updated.id,
       name: updated.name,
       email: updated.email,
-      role: spanishRoleName,
-      lastLogin: updated.lastLogin.toISOString(),
+      role: updated.role,
+      lastLogin: updated.lastLogin?.toISOString(),
     };
 
     return NextResponse.json({ ok: true, user: userResponse }, { status: 200 });

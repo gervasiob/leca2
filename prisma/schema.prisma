@@ -1,5 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Este es tu esquema de Prisma.
+// Aprende más sobre él en la documentación: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
@@ -11,43 +11,44 @@ datasource db {
   relationMode = "prisma"
 }
 
-// Roles and Permissions
-model Role {
-  id          Int      @id @default(autoincrement())
-  name        String   @unique
-  permissions String[]
-  users       User[]
+// ==============================================================
+//                         MODELOS
+// ==============================================================
 
-  @@map("roles")
-}
-
-// User Model
 model User {
-  id           Int       @id @default(autoincrement())
-  email        String    @unique
-  name         String
-  passwordHash String
-  role         UserRole  @default(Invitado)
-  roleId       Int
-  role_rel     Role      @relation(fields: [roleId], references: [id])
-  lastLogin    DateTime?
-  orders       Order[]
+  id            Int         @id @default(autoincrement())
+  email         String      @unique
+  name          String
+  passwordHash  String
+  role          UserRole
+  lastLogin     DateTime?
+  orders        Order[]
+  roleRelation  Role        @relation("RoleToUser", fields: [roleId], references: [id])
+  roleId        Int
 
   @@map("users")
 }
 
-// Client Model
+model Role {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  permissions String[]
+  users       User[]   @relation("RoleToUser")
+
+  @@map("roles")
+}
+
 model Client {
-  id                  Int      @id @default(autoincrement())
+  id                  Int           @id @default(autoincrement())
   name                String
-  cuit                String   @unique
+  cuit                String        @unique
   address             String
   phone               String
-  email               String   @unique
-  discountLevel       Int      @default(0) // 0: none, 1: level 1, etc.
-  canEditPrices       Boolean  @default(false)
-  commissionFee       Float    @default(0)
-  sellsOnInstallments Boolean  @default(false)
+  email               String        @unique
+  discountLevel       Int           @default(1)
+  canEditPrices       Boolean       @default(false)
+  commissionFee       Float         @default(0)
+  sellsOnInstallments Boolean       @default(false)
   orders              Order[]
   orderDetails        OrderDetail[]
   claims              Claim[]
@@ -55,93 +56,77 @@ model Client {
   @@map("clients")
 }
 
-// Product Model
 model Product {
   id          Int           @id @default(autoincrement())
   name        String
   type        String
   application String
   colors      String[]
-  status      String        @default("active") // active, inactive
+  status      String        @default("active")
   orderDetails OrderDetail[]
 
   @@map("products")
 }
 
-// Order Model
 model Order {
   id          Int           @id @default(autoincrement())
-  clientId    Int
   client      Client        @relation(fields: [clientId], references: [id])
-  userId      Int
+  clientId    Int
   user        User          @relation(fields: [userId], references: [id])
-  status      String // pending, partial, complete, etc.
-  totalAmount Decimal       @db.Decimal(12, 2)
+  userId      Int
+  status      String
+  totalAmount Decimal       @db.Decimal(10, 2)
   orderDate   DateTime      @default(now())
   isPartial   Boolean       @default(false)
   details     OrderDetail[]
   claims      Claim[]
-  batchItems  ProductionBatchItem[]
 
   @@map("orders")
 }
 
-// Order Detail Model (Line Items)
 model OrderDetail {
-  id                 Int      @id @default(autoincrement())
+  id                 Int              @id @default(autoincrement())
+  order              Order            @relation(fields: [orderId], references: [id])
   orderId            Int
-  order              Order    @relation(fields: [orderId], references: [id])
-  productId          Int
-  product            Product  @relation(fields: [productId], references: [id])
-  quantity           Int
-  unitPrice          Decimal  @db.Decimal(12, 2)
-  totalPrice         Decimal  @db.Decimal(12, 2)
+  client             Client           @relation(fields: [clientId], references: [id])
   clientId           Int
-  client             Client   @relation(fields: [clientId], references: [id])
-  cartId             String?
-  paymentId          String?
-  deliveryNoteId     String?
-  batchId            Int?
+  product            Product          @relation(fields: [productId], references: [id])
+  productId          Int
+  quantity           Int
+  unitPrice          Decimal          @db.Decimal(10, 2)
+  totalPrice         Decimal          @db.Decimal(10, 2)
   status             String
-  isProduced         Boolean  @default(false)
+  isProduced         Boolean          @default(false)
+  // Campos de fechas para seguimiento
   productionDate     DateTime?
   productionDoneDate DateTime?
   dispatchReadyDate  DateTime?
   dispatchedDate     DateTime?
   deliveryNoteDate   DateTime?
-  claim              Claim?
-  batchItem          ProductionBatchItem?
+  // IDs opcionales para relaciones
+  cartId             String?
+  paymentId          String?
+  deliveryNoteId     String?
+  batchId            Int?
+  productionBatch    ProductionBatch? @relation(fields: [batchId], references: [id])
+  Claim              Claim[]
 
   @@map("order_details")
 }
 
-// Production Batch Model
 model ProductionBatch {
-  id              Int      @id @default(autoincrement())
-  batchNumber     String   @unique
-  productionDate  DateTime
-  plannedDate     DateTime
-  status          String // Planned, In Progress, Completed
-  items           ProductionBatchItem[]
+  id             Int           @id @default(autoincrement())
+  batchNumber    String        @unique
+  productionDate DateTime?
+  plannedDate    DateTime
+  status         String
+  items          OrderDetail[]
 
   @@map("production_batches")
 }
 
-model ProductionBatchItem {
-    id Int @id @default(autoincrement())
-    batchId Int
-    batch ProductionBatch @relation(fields: [batchId], references: [id])
-    orderDetailId Int @unique
-    orderDetail OrderDetail @relation(fields: [orderDetailId], references: [id])
-    orderId Int
-    order Order @relation(fields: [orderId], references: [id])
-
-    @@map("production_batch_items")
-}
-
-// Claim Model
 model Claim {
-  id            Int         @id @default(autoincrect()))
+  id            Int         @id @default(autoincrement())
   orderDetail   OrderDetail @relation(fields: [orderDetailId], references: [id])
   orderDetailId Int         @unique
   order         Order       @relation(fields: [orderId], references: [id])
@@ -155,6 +140,11 @@ model Claim {
 
   @@map("claims")
 }
+
+
+// ==============================================================
+//                           ENUMS
+// ==============================================================
 
 enum UserRole {
   Admin

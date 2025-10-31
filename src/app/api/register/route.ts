@@ -4,6 +4,7 @@ import { UserRole } from '@/lib/types';
 import bcrypt from 'bcryptjs';
 
 export async function POST(request: Request) {
+  console.log('request', request)
   try {
     const body = await request.json();
     const name: string | undefined = body?.name?.toString().trim();
@@ -11,7 +12,7 @@ export async function POST(request: Request) {
     const email = emailRaw ? emailRaw.trim().toLowerCase() : undefined;
     const passwordRaw: string | undefined = body?.password?.toString();
     const password = passwordRaw ? passwordRaw.trim() : undefined;
-
+    const roleId = 4;
     if (!name || !email || !password) {
       return NextResponse.json(
         { ok: false, error: 'Nombre, email y contraseña son requeridos' },
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
     const guestRole = await prisma.role.findFirst({
         where: { name: 'Guest' } // Standardize to English
     });
-
+    console.log('guest role', guestRole)
     if (!guestRole) {
         return NextResponse.json({ok: false, error: "El rol 'Guest' no existe. Ejecute el seeder."}, {status: 500});
     }
@@ -50,13 +51,13 @@ export async function POST(request: Request) {
         data: {
             name,
             email,
-            role: UserRole.Guest, // This is the 'Guest' enum value
+            // role: UserRole.Guest, // This is the 'Guest' enum value
             passwordHash,
             roleId: guestRole.id,
             lastLogin: new Date(),
         }
     });
-    
+    console.log('newUser', newUser)
     const userResponse = {
       id: newUser.id,
       name: newUser.name,

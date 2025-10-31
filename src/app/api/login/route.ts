@@ -9,7 +9,6 @@ export async function POST(request: Request) {
     const passwordRaw: string | undefined = body?.password?.toString();
     const email = emailRaw ? emailRaw.trim().toLowerCase() : undefined;
     const password = passwordRaw ? passwordRaw.trim() : undefined;
-
     if (!email || !password) {
       return NextResponse.json(
         { ok: false, error: 'Email y contraseña son requeridos' },

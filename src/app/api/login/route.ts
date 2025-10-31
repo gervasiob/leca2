@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     // Ensure all fields are serializable
     const serializablePayload = {
       ...payload,
-      lastLogin: updatedUser.lastLogin.toISOString(), // Now guaranteed to exist
+      lastLogin: updatedUser.lastLogin?.toISOString() ?? new Date().toISOString(),
     }
 
     const res = NextResponse.json({ ok: true, user: serializablePayload }, { status: 200 });

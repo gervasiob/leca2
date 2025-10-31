@@ -32,14 +32,14 @@ const prisma = new PrismaClient();
 
 
 const passwordForRole = (
-  role: 'Admin' | 'Sales' | 'Production' | 'Guest' | 'System'
+  role: UserRole
 ) => {
   switch (role) {
-    case 'Admin': return 'admin';
-    case 'Sales': return 'ventas';
-    case 'Production': return 'produccion';
-    case 'System': return 'system';
-    case 'Guest': return 'invitado';
+    case UserRole.Admin: return 'admin';
+    case UserRole.Sales: return 'ventas';
+    case UserRole.Production: return 'produccion';
+    case UserRole.System: return 'system';
+    case UserRole.Guest: return 'invitado';
     default: return 'password';
   }
 }
@@ -72,18 +72,20 @@ async function main() {
 
   // 2. Seed Users
   for (const user of seedUsers) {
-    const roleNameMap = {
+    const roleNameMap: Record<UserRole, string> = {
       [UserRole.Admin]: 'Admin',
       [UserRole.Sales]: 'Ventas',
       [UserRole.Production]: 'Producción',
       [UserRole.Guest]: 'Invitado',
       [UserRole.System]: 'System',
     }
+    const uiRoleName = roleNameMap[user.role];
     const roleInDb = await prisma.role.findFirst({
-      where: { name: { equals: roleNameMap[user.role], mode: 'insensitive' } },
+      where: { name: { equals: uiRoleName, mode: 'insensitive' } },
     });
+
     if (!roleInDb) {
-      console.warn(`Role for "${user.role}" not found in DB. Skipping user "${user.name}".`);
+      console.warn(`Role "${uiRoleName}" not found in DB. Skipping user "${user.name}".`);
       continue;
     }
     const password = passwordForRole(user.role);

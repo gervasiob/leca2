@@ -1,9 +1,11 @@
-export const ROLE_NAME_MAP: Record<string, string> = {
-  Admin: 'Admin',
-  Sales: 'Ventas',
-  Production: 'Produccion',
-  Invitado: 'Invitado',
-  System: 'System',
+import { UserRole } from "./types";
+
+export const ROLE_NAME_MAP: Record<UserRole, string> = {
+  [UserRole.Admin]: 'Admin',
+  [UserRole.Sales]: 'Ventas',
+  [UserRole.Production]: 'Producción',
+  [UserRole.Guest]: 'Invitado',
+  [UserRole.System]: 'System',
 };
 
 export const SCREENS_TO_PATHS: Record<string, string[]> = {
@@ -11,7 +13,7 @@ export const SCREENS_TO_PATHS: Record<string, string[]> = {
   'Cuentas por Cobrar': ['/accounts-receivable'],
   'Ventas': ['/sales', '/sales/orders', '/sales/clients'],
   'Reclamos': ['/sales/claims'],
-  'Produccion': ['/production', '/production/batches'],
+  'Producción': ['/production', '/production/batches'],
   'Remitos': ['/dispatch'],
   'Listas de Precios': ['/price-lists'],
   'Configuración': ['/settings', '/settings/users', '/settings/roles', '/settings/products'],
@@ -24,10 +26,15 @@ export const normalizeName = (s: string) => s.normalize('NFD').replace(/[\u0300-
 export function isPathAllowed(pathname: string, allowedScreens: string[]): boolean {
   const normalizedPath = pathname.toLowerCase();
 
+  // Special rules first
+  if (normalizedPath === '/' || normalizedPath.startsWith('/login') || normalizedPath.startsWith('/register')) {
+    return true;
+  }
+  
   // Reglas específicas de Ventas
   if (normalizedPath.startsWith('/sales')) {
-    const hasSales = allowedScreens.includes('Ventas');
-    const hasClaims = allowedScreens.includes('Reclamos');
+    const hasSales = allowedScreens.some(s => normalizeName(s) === normalizeName('Ventas'));
+    const hasClaims = allowedScreens.some(s => normalizeName(s) === normalizeName('Reclamos'));
     if (normalizedPath.startsWith('/sales/claims')) {
       return hasClaims;
     }

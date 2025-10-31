@@ -1,6 +1,7 @@
 
 
 
+
 // Enumeración para roles de usuario, para consistencia.
 export enum UserRole {
   Admin = 'Admin',
@@ -99,7 +100,7 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  role: 'Admin' | 'Sales' | 'Production' | 'Guest' | 'System';
+  role: UserRole;
   lastLogin: Date;
   passwordHash?: string;
   roleId?: number;

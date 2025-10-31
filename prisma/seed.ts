@@ -32,30 +32,30 @@ const prisma = new PrismaClient();
 
 
 const passwordForRole = (
-  role: 'Admin' | 'Ventas' | 'Produccion' | 'Invitado' | 'System'
-) =>
-  role === 'Admin'
-    ? 'admin'
-    : role === 'Ventas'
-    ? 'ventas'
-    : role === 'Produccion'
-    ? 'produccion'
-    : role === 'System'
-    ? 'system'
-    : 'invitado';
+  role: 'Admin' | 'Sales' | 'Production' | 'Guest' | 'System'
+) => {
+  switch (role) {
+    case 'Admin': return 'admin';
+    case 'Sales': return 'ventas';
+    case 'Production': return 'produccion';
+    case 'System': return 'system';
+    case 'Guest': return 'invitado';
+    default: return 'password';
+  }
+}
 
 async function main() {
   console.log('Start seeding...');
   
-  // Clean up existing data
+  // Clean up existing data in the correct order to avoid foreign key constraints
   await prisma.claim.deleteMany({});
   await prisma.orderDetail.deleteMany({});
   await prisma.productionBatch.deleteMany({});
   await prisma.order.deleteMany({});
-  await prisma.product.deleteMany({});
-  await prisma.client.deleteMany({});
   await prisma.user.deleteMany({});
   await prisma.role.deleteMany({});
+  await prisma.product.deleteMany({});
+  await prisma.client.deleteMany({});
   console.log('Cleared existing data.');
 
   // 1. Seed Roles
@@ -72,14 +72,21 @@ async function main() {
 
   // 2. Seed Users
   for (const user of seedUsers) {
-    const role = await prisma.role.findFirst({
-      where: { name: { equals: user.role, mode: 'insensitive' } },
+    const roleNameMap = {
+      [UserRole.Admin]: 'Admin',
+      [UserRole.Sales]: 'Ventas',
+      [UserRole.Production]: 'Producción',
+      [UserRole.Guest]: 'Invitado',
+      [UserRole.System]: 'System',
+    }
+    const roleInDb = await prisma.role.findFirst({
+      where: { name: { equals: roleNameMap[user.role], mode: 'insensitive' } },
     });
-    if (!role) {
-      console.warn(`Role "${user.role}" not found for user "${user.name}". Skipping.`);
+    if (!roleInDb) {
+      console.warn(`Role for "${user.role}" not found in DB. Skipping user "${user.name}".`);
       continue;
     }
-    const password = passwordForRole(user.role as 'Admin' | 'Ventas' | 'Produccion' | 'Invitado' | 'System');
+    const password = passwordForRole(user.role);
     const passwordHash = await bcrypt.hash(password, 10);
 
     await prisma.user.create({
@@ -87,10 +94,10 @@ async function main() {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role as UserRole,
+        role: user.role,
         lastLogin: user.lastLogin,
         passwordHash,
-        roleId: role.id,
+        roleId: roleInDb.id,
       },
     });
   }
@@ -161,7 +168,7 @@ async function main() {
     if (!orderExists) {
         const detail = seedDetails.find(d => d.orderId === orderId)!;
         const client = await prisma.client.findUnique({ where: { id: detail.clientId }});
-        const user = await prisma.user.findFirst({ where: { role: UserRole.Ventas } });
+        const user = await prisma.user.findFirst({ where: { role: UserRole.Sales } });
         if (!user || !client) continue;
 
         const totalAmount = seedDetails.filter(d => d.orderId === orderId).reduce((sum, item) => sum + item.totalPrice, 0);

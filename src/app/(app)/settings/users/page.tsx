@@ -38,8 +38,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { UserRole as UserRoleEnum } from '@prisma/client';
 
-const roleVariantMap: { [key: string]: 'default' | 'secondary' | 'outline' } = {
+const roleVariantMap: { [key: string]: 'default' | 'secondary' | 'outline' | 'destructive' } = {
     'Admin': 'default',
     'Ventas': 'secondary',
     'Producción': 'outline',
@@ -47,12 +48,7 @@ const roleVariantMap: { [key: string]: 'default' | 'secondary' | 'outline' } = {
     'System': 'destructive',
   };
 
-const ENUM_ROLES = ['Admin', 'Ventas', 'Producción', 'Invitado', 'System'];
-
-const toEnumRole = (name: string) => ENUM_ROLES.find(r => r.toLowerCase() === name.toLowerCase());
-
-// Roles disponibles desde la tabla roles
-
+const UI_ROLES = ['Admin', 'Ventas', 'Producción', 'Invitado', 'System'];
 
 type UserRow = { id: number; name: string; email: string; role: string; lastLogin: Date | null };
 
@@ -61,22 +57,18 @@ export default function UserSettingsPage() {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
  
-  const [availableRoles, setAvailableRoles] = useState<string[]>(ENUM_ROLES);
+  const [availableRoles, setAvailableRoles] = useState<string[]>(UI_ROLES);
   useEffect(() => {
     const loadRoles = async () => {
       try {
         const res = await fetch('/api/roles', { credentials: 'include' });
-        console.log('res', await res.json());
         const data = await res.json();
         if (res.ok && Array.isArray(data?.roles)) {
-          const names = data.roles
-            .map((r: any) => String(r.name))
-            .map((n: string) => toEnumRole(n))
-            .filter(Boolean) as string[];
+          const names = data.roles.map((r: any) => String(r.name));
           if (names.length > 0) setAvailableRoles(names);
         }
       } catch {
-        // fallback al ENUM_ROLES
+        // fallback to UI_ROLES
       }
     };
     loadRoles();
@@ -94,11 +86,18 @@ export default function UserSettingsPage() {
         const res = await fetch('/api/users', { credentials: 'include' });
         const data = await res.json();
         if (res.ok && Array.isArray(data?.users)) {
+           const roleNameMap: Record<string, string> = {
+            [UserRoleEnum.Admin]: 'Admin',
+            [UserRoleEnum.Sales]: 'Ventas',
+            [UserRoleEnum.Production]: 'Producción',
+            [UserRoleEnum.Guest]: 'Invitado',
+            [UserRoleEnum.System]: 'System',
+          };
           const parsed = data.users.map((u: any) => ({
             id: u.id,
             name: u.name,
             email: u.email,
-            role: u.role,
+            role: roleNameMap[u.role] || u.role,
             lastLogin: u.lastLogin ? new Date(u.lastLogin) : null,
           }));
           setUsers(parsed);

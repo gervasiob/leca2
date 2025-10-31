@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { UserRole } from '@/lib/types';
+import { UserRole } from '@prisma/client';
 
 export async function PATCH(request: Request, { params }: { params: { id: string } }) {
   try {
@@ -20,25 +20,25 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     if (email) data.email = email;
 
     if (roleInput) {
-      // Aceptar español o inglés y mapear al enum en español
-      const roleMap: Record<string, keyof typeof UserRole> = {
-        Admin: 'Admin',
-        Sales: 'Ventas',
-        Production: 'Producción',
-        Invitado: 'Invitado',
-        Ventas: 'Ventas',
-        'Producción': 'Producción',
+      // Map from Spanish UI name to English Enum value
+      const roleNameMap: Record<string, UserRole> = {
+        'Admin': UserRole.Admin,
+        'Ventas': UserRole.Sales,
+        'Producción': UserRole.Production,
+        'Invitado': UserRole.Guest,
+        'System': UserRole.System,
       };
-      const mappedRole = roleMap[roleInput];
-      if (!mappedRole) {
+      
+      const enumRole = roleNameMap[roleInput];
+      if (!enumRole) {
         return NextResponse.json({ ok: false, error: 'Rol inválido' }, { status: 400 });
       }
-      data.role = (UserRole as any)[mappedRole];
+      data.role = enumRole;
 
-      // Encontrar Role en tabla por nombre mostrado (español)
-      const roleRow = await prisma.role.findFirst({ where: { name: data.role } });
+      // Find Role in table by its Spanish name to get the ID
+      const roleRow = await prisma.role.findFirst({ where: { name: roleInput } });
       if (!roleRow) {
-        return NextResponse.json({ ok: false, error: `El rol '${data.role}' no existe. Ejecute el seeder.` }, { status: 400 });
+        return NextResponse.json({ ok: false, error: `El rol '${roleInput}' no existe en la tabla de roles. Ejecute el seeder.` }, { status: 400 });
       }
       data.roleId = roleRow.id;
     }
@@ -47,12 +47,15 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       where: { id: idNum },
       data,
     });
+    
+    // Map back to Spanish for the response to be consistent with UI
+     const spanishRoleName = (await prisma.role.findUnique({ where: { id: updated.roleId } }))?.name || updated.role;
 
     const userResponse = {
       id: updated.id,
       name: updated.name,
       email: updated.email,
-      role: updated.role,
+      role: spanishRoleName,
       lastLogin: updated.lastLogin.toISOString(),
     };
 

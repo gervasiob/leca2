@@ -1,4 +1,5 @@
 import type { Client, Order, OrderDetail, ProductionBatch, Product, Claim, User, Role } from './types';
+import { UserRole } from './types';
 
 export const clients: Client[] = [
   { id: 1, name: 'Constructora del Norte S.A.', cuit: '30-12345678-9', address: 'Av. Siempre Viva 742, Springfield', phone: '11-2345-6789', email: 'compras@constructora-norte.com', discountLevel: 2, canEditPrices: false, commissionFee: 5, sellsOnInstallments: true },
@@ -52,12 +53,12 @@ export const claims: Claim[] = [
     { id: 1, orderDetailId: 6, orderId: 103, clientId: 1, clientName: 'Constructora del Norte S.A.', reason: 'Color incorrecto', status: 'open', resolution: undefined, createdAt: new Date('2023-11-15') },
 ];
 
-// Default user: admin, password: admin
-export const users: User[] = [
-    { id: 1, name: 'admin', email: 'admin@fabrica.com', role: 'Admin', lastLogin: new Date('2023-11-20T10:00:00Z') },
-    { id: 2, name: 'vendedor_estrella', email: 'ventas@fabrica.com', role: 'Ventas', lastLogin: new Date('2023-11-19T14:30:00Z') },
-    { id: 3, name: 'jefe_produccion', email: 'produccion@fabrica.com', role: 'Produccion', lastLogin: new Date('2023-11-21T08:00:00Z') },
-    { id: 4, name: 'system', email: 'system@fabrica.com', role: 'System', lastLogin: new Date() },
+export const users: Pick<User, 'id' | 'name' | 'email' | 'role' | 'lastLogin'>[] = [
+    { id: 1, name: 'admin', email: 'admin@fabrica.com', role: UserRole.Admin, lastLogin: new Date('2023-11-20T10:00:00Z') },
+    { id: 2, name: 'vendedor_estrella', email: 'ventas@fabrica.com', role: UserRole.Sales, lastLogin: new Date('2023-11-19T14:30:00Z') },
+    { id: 3, name: 'jefe_produccion', email: 'produccion@fabrica.com', role: UserRole.Production, lastLogin: new Date('2023-11-21T08:00:00Z') },
+    { id: 4, name: 'system', email: 'system@fabrica.com', role: UserRole.System, lastLogin: new Date() },
+    { id: 5, name: 'invitado', email: 'guest@fabrica.com', role: UserRole.Guest, lastLogin: new Date() },
 ];
 
 export const screens = [
@@ -76,7 +77,7 @@ export const screens = [
 export const roles: Role[] = [
     { id: 1, name: 'Admin', permissions: [...screens.filter(s => s !== 'DB Viewer')] },
     { id: 2, name: 'Ventas', permissions: ['Cuentas por Cobrar', 'Ventas', 'Remitos', 'Listas de Precios', 'Reclamos'] },
-    { id: 3, name: 'Produccion', permissions: ['Produccion', 'Remitos'] },
+    { id: 3, name: 'Producción', permissions: ['Produccion', 'Remitos'] },
     { id: 4, name: 'Invitado', permissions: [] },
     { id: 5, name: 'System', permissions: [...screens] },
 ];

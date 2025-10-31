@@ -6,25 +6,20 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
-
-// -------------------
-// --- AUTH MODELS ---
-// -------------------
 
 model User {
   id           Int      @id @default(autoincrement())
   name         String
   email        String   @unique
-  role         UserRole @default(Invitado)
+  role         UserRole
   passwordHash String
   lastLogin    DateTime @default(now())
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
   roleId       Int
-  role_relation Role    @relation("RoleToUser", fields: [roleId], references: [id])
+  roleRef      Role     @relation(fields: [roleId], references: [id])
   orders       Order[]
 
   @@map("users")
@@ -34,34 +29,22 @@ model Role {
   id          Int      @id @default(autoincrement())
   name        String   @unique
   permissions String[]
-  users       User[]   @relation("RoleToUser")
+  users       User[]
 
   @@map("roles")
 }
 
-enum UserRole {
-  Admin
-  Ventas
-  Produccion
-  Invitado
-  System
-}
-
-// -------------------
-// --- CORE MODELS ---
-// -------------------
-
 model Client {
-  id                  Int      @id @default(autoincrement())
+  id                  Int       @id @default(autoincrement())
   name                String
-  cuit                String   @unique
+  cuit                String    @unique
   address             String
   phone               String
   email               String
-  discountLevel       Int      @default(0) // e.g., 0 for none, 1 for 5%, 2 for 10%
-  canEditPrices       Boolean  @default(false)
-  commissionFee       Float    @default(0)
-  sellsOnInstallments Boolean  @default(false)
+  discountLevel       Int       @default(1)
+  canEditPrices       Boolean   @default(false)
+  commissionFee       Float     @default(0)
+  sellsOnInstallments Boolean   @default(false)
   orders              Order[]
   orderDetails        OrderDetail[]
   claims              Claim[]
@@ -70,60 +53,57 @@ model Client {
 }
 
 model Product {
-  id          Int      @id @default(autoincrement())
+  id          Int           @id @default(autoincrement())
   name        String
   type        String
   application String
   colors      String[]
-  status      String   @default("active") // active, inactive
-  details     OrderDetail[]
+  status      String        @default("active")
+  orderDetails OrderDetail[]
 
   @@map("products")
 }
 
-
 model Order {
-  id         Int           @id @default(autoincrement())
-  client     Client        @relation(fields: [clientId], references: [id])
-  clientId   Int
-  user       User          @relation(fields: [userId], references: [id])
-  userId     Int
-  status     String
-  totalAmount Decimal      @db.Decimal(10, 2)
-  orderDate  DateTime      @default(now())
-  isPartial  Boolean       @default(false)
-  details    OrderDetail[]
-  claims     Claim[]
+  id          Int           @id @default(autoincrement())
+  client      Client        @relation(fields: [clientId], references: [id])
+  clientId    Int
+  user        User          @relation(fields: [userId], references: [id])
+  userId      Int
+  status      String
+  totalAmount Decimal
+  orderDate   DateTime
+  isPartial   Boolean
+  details     OrderDetail[]
+  claims      Claim[]
 
   @@map("orders")
 }
 
 model OrderDetail {
   id                 Int      @id @default(autoincrement())
-  order              Order?    @relation(fields: [orderId], references: [id])
-  orderId            Int?
-  client             Client   @relation(fields: [clientId], references: [id])
-  clientId           Int
   product            Product  @relation(fields: [productId], references: [id])
   productId          Int
   quantity           Int
-  unitPrice          Decimal  @db.Decimal(10, 2)
-  totalPrice         Decimal  @db.Decimal(10, 2)
-  status             String // pending, produced, dispatched, delivered, claimed, etc.
-  isProduced         Boolean  @default(false)
-  productionDate     DateTime?
-  productionDoneDate DateTime?
-  dispatchReadyDate  DateTime?
-  dispatchedDate     DateTime?
-  deliveryNoteDate   DateTime?
-
-  // FKs for other processes, can be nullable
+  unitPrice          Decimal
+  totalPrice         Decimal
+  order              Order    @relation(fields: [orderId], references: [id])
+  orderId            Int
+  client             Client   @relation(fields: [clientId], references: [id])
+  clientId           Int
   cartId             String?
   paymentId          String?
   deliveryNoteId     String?
   batch              ProductionBatch? @relation(fields: [batchId], references: [id])
   batchId            Int?
-  claim              Claim?
+  status             String
+  isProduced         Boolean
+  productionDate     DateTime?
+  productionDoneDate DateTime?
+  dispatchReadyDate  DateTime?
+  dispatchedDate     DateTime?
+  deliveryNoteDate   DateTime?
+  claim              Claim[]
 
   @@map("order_details")
 }
@@ -133,7 +113,7 @@ model ProductionBatch {
   batchNumber    String        @unique
   productionDate DateTime
   plannedDate    DateTime
-  status         String        // Planned, In Progress, Completed
+  status         String
   items          OrderDetail[]
 
   @@map("production_batches")
@@ -148,9 +128,17 @@ model Claim {
   client        Client      @relation(fields: [clientId], references: [id])
   clientId      Int
   reason        String
-  status        String      // open, resolved, closed
+  status        String
   resolution    String?
-  createdAt     DateTime    @default(now())
+  createdAt     DateTime
 
   @@map("claims")
+}
+
+enum UserRole {
+  Admin
+  Sales
+  Production
+  Guest
+  System
 }

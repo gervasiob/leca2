@@ -36,17 +36,19 @@ export async function POST(request: Request) {
       );
     }
 
-    // Update last login
-    await prisma.user.update({
+    // Update last login before creating the cookie payload
+    const updatedUser = await prisma.user.update({
         where: { id: user.id },
         data: { lastLogin: new Date() }
     });
 
     // Exclude passwordHash from the payload
-    const { passwordHash, ...payload } = user;
+    const { passwordHash, ...payload } = updatedUser;
+    
+    // Ensure all fields are serializable
     const serializablePayload = {
       ...payload,
-      lastLogin: user.lastLogin?.toISOString() || new Date().toISOString(),
+      lastLogin: updatedUser.lastLogin.toISOString(), // Now guaranteed to exist
     }
 
     const res = NextResponse.json({ ok: true, user: serializablePayload }, { status: 200 });

@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  transpilePackages: ['cmdk', 'geist'],
   images: {
     remotePatterns: [
       {

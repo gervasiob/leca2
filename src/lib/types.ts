@@ -1,7 +1,3 @@
-
-
-
-
 // Enumeración para roles de usuario, para consistencia.
 export enum UserRole {
   Admin = 'Admin',

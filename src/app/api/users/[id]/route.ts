@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
-import { roles as seedRoles } from '@/lib/data';
 
 const UI_TO_ENUM_ROLE_MAP: Record<string, UserRole> = {
   'Admin': UserRole.Admin,

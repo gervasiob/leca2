@@ -26,6 +26,7 @@ import {
   Building2,
   BarChart3,
   Database,
+  LogOut,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';

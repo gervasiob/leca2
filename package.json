@@ -12,7 +12,8 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "git": "node ./scripts/git-push.js",
-    "db:reset": "prisma db push --force-reset --accept-data-loss"
+    "db:reset": "prisma db push --force-reset --accept-data-loss",
+    "clean": "rm -rf .next"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

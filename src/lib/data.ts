@@ -2,10 +2,10 @@ import type { Client, Order, OrderDetail, ProductionBatch, Product, Claim, User,
 import { UserRole } from './types';
 
 export const clients: Client[] = [
-  { id: 1, name: 'Constructora del Norte S.A.', cuit: '30-12345678-9', address: 'Av. Siempre Viva 742, Springfield', phone: '11-2345-6789', email: 'compras@constructora-norte.com', discountLevel: 2, canEditPrices: false, commissionFee: 5, sellsOnInstallments: true },
-  { id: 2, name: 'Diseño & Deco Interior', cuit: '30-87654321-5', address: 'Calle Falsa 123, Villa Chica', phone: '11-8765-4321', email: 'info@diseno-deco.com', discountLevel: 1, canEditPrices: true, commissionFee: 10, sellsOnInstallments: false },
-  { id: 3, name: 'Pinturas Express', cuit: '30-11223344-7', address: 'Boulevard de los Sueños Rotos 456, Metrópolis', phone: '11-1122-3344', email: 'pedidos@pinturasexpress.com', discountLevel: 3, canEditPrices: false, commissionFee: 3, sellsOnInstallments: true },
-  { id: 4, name: 'Hogar Total S.R.L.', cuit: '30-55667788-2', address: 'Pasaje Mágico 789, Ciudad Gótica', phone: '11-5566-7788', email: 'proveedores@hogartotal.com', discountLevel: 1, canEditPrices: false, commissionFee: 5, sellsOnInstallments: false },
+  { id: 1, name: 'Constructora del Norte S.A.', cuit: '30-12345678-9', address: 'Av. Siempre Viva 742, Springfield', phone: '11-2345-6789', email: 'compras@constructora-norte.com', discountLevel: 2, canEditPrices: false, commissionFee: 5, sellsOnInstallments: true, accessibleUserIds: [2] },
+  { id: 2, name: 'Diseño & Deco Interior', cuit: '30-87654321-5', address: 'Calle Falsa 123, Villa Chica', phone: '11-8765-4321', email: 'info@diseno-deco.com', discountLevel: 1, canEditPrices: true, commissionFee: 10, sellsOnInstallments: false, accessibleUserIds: [2] },
+  { id: 3, name: 'Pinturas Express', cuit: '30-11223344-7', address: 'Boulevard de los Sueños Rotos 456, Metrópolis', phone: '11-1122-3344', email: 'pedidos@pinturasexpress.com', discountLevel: 3, canEditPrices: false, commissionFee: 3, sellsOnInstallments: true, accessibleUserIds: [3] },
+  { id: 4, name: 'Hogar Total S.R.L.', cuit: '30-55667788-2', address: 'Pasaje Mágico 789, Ciudad Gótica', phone: '11-5566-7788', email: 'proveedores@hogartotal.com', discountLevel: 1, canEditPrices: false, commissionFee: 5, sellsOnInstallments: false, accessibleUserIds: [2] },
 ];
 
 export const products: Product[] = [

@@ -83,6 +83,7 @@ export function Header() {
   const { toast } = useToast();
 
   const [allowedScreens, setAllowedScreens] = useState<string[] | null>(null);
+  const [userInfo, setUserInfo] = useState<{ name?: string; role?: UserRole } | null>(null);
 
   useEffect(() => {
     const loadPermissions = async () => {
@@ -94,6 +95,7 @@ export function Header() {
           return;
         }
         const userRoleEnum: UserRole = meData.user.role as UserRole;
+        setUserInfo({ name: meData?.user?.name, role: userRoleEnum });
         
         const rolesRes = await fetch('/api/roles', { credentials: 'include' });
         const rolesData = await rolesRes.json();
@@ -229,13 +231,32 @@ export function Header() {
             <Button variant="secondary" size="icon" className="rounded-full">
               <Avatar>
                 <AvatarImage src="https://picsum.photos/seed/user/32/32" />
-                <AvatarFallback>AD</AvatarFallback>
+                <AvatarFallback>
+                  {userInfo?.name
+                    ? userInfo.name
+                        .split(' ')
+                        .map((n) => n[0])
+                        .join('')
+                        .slice(0, 2)
+                        .toUpperCase()
+                    : 'US'}
+                </AvatarFallback>
               </Avatar>
               <span className="sr-only">Alternar menú de usuario</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+            <DropdownMenuLabel>
+              <div className="flex flex-col">
+                <span>Mi Cuenta</span>
+                {userInfo?.name && (
+                  <span className="text-xs text-muted-foreground">
+                    {userInfo.name}
+                    {userInfo?.role ? ` · ${ROLE_UI_NAME_MAP[userInfo.role]}` : ''}
+                  </span>
+                )}
+              </div>
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem>Configuración</DropdownMenuItem>
             <DropdownMenuItem>Soporte</DropdownMenuItem>

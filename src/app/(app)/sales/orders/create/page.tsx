@@ -22,15 +22,10 @@ import {
 } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { clients, products, orderDetails } from '@/lib/data';
-import type { Client } from '@/lib/types';
+// Select removido para clientes; usamos Combobox con búsqueda
+import { clients, products, orderDetails, users } from '@/lib/data';
+import type { Client, User } from '@/lib/types';
+import { UserRole } from '@/lib/types';
 import { ChevronLeft, PlusCircle, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Combobox } from '@/components/ui/combobox';
@@ -73,6 +68,22 @@ export default function CreateOrderPage() {
   const colorOptions = useMemo(() => {
     return selectedProduct?.colors.map(c => ({ value: c, label: c })) || [];
   }, [selectedProduct]);
+
+  // Simulación de usuario logueado
+  const loggedInUser: User | undefined = users.find(u => u.id === 2); // Ventas
+  const isAdmin = loggedInUser?.role === UserRole.Admin;
+  const isSystem = loggedInUser?.role === UserRole.System;
+  const isSales = loggedInUser?.role === UserRole.Sales;
+
+  const visibleClients: Client[] = useMemo(() => {
+    if (isAdmin || isSystem) return clients;
+    if (isSales) return clients.filter(c => (c.accessibleUserIds || []).includes(loggedInUser!.id));
+    return clients;
+  }, [isAdmin, isSystem, isSales]);
+
+  const clientOptions = useMemo(() => {
+    return visibleClients.map(c => ({ value: c.id.toString(), label: c.name }));
+  }, [visibleClients]);
 
 
   useEffect(() => {
@@ -164,18 +175,17 @@ export default function CreateOrderPage() {
             <CardContent>
                 <div className='max-w-md'>
                     <Label htmlFor='client-select'>Cliente</Label>
-                    <Select onValueChange={(value) => setSelectedClient(clients.find(c => c.id === parseInt(value)) || null)}>
-                        <SelectTrigger id="client-select">
-                            <SelectValue placeholder="Selecciona un cliente" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {clients.map(client => (
-                                <SelectItem key={client.id} value={client.id.toString()}>
-                                    {client.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <Combobox
+                      options={clientOptions}
+                      value={selectedClient?.id?.toString() || ''}
+                      onChange={(value) => {
+                        const client = visibleClients.find(c => c.id === parseInt(value, 10)) || null;
+                        setSelectedClient(client);
+                      }}
+                      placeholder='Selecciona un cliente'
+                      searchPlaceholder='Buscar clientes...'
+                noResultsMessage='No se encontraron clientes.'
+                    />
                 </div>
             </CardContent>
         </Card>
@@ -207,7 +217,6 @@ export default function CreateOrderPage() {
                             placeholder='Selecciona un color'
                             searchPlaceholder='Buscar colores...'
                             noResultsMessage='No se encontraron colores.'
-                            disabled={!selectedProduct}
                         />
                      </div>
                     <div>

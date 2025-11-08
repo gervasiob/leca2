@@ -1,5 +1,5 @@
-// scripts/git-push.js
-import { execSync } from "child_process";
+// scripts/git-push.js (CommonJS para compatibilidad con Node en scripts)
+const { execSync } = require('child_process');
 
 function run(cmd) {
     execSync(cmd, { stdio: "inherit" });

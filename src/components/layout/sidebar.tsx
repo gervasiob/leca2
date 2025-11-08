@@ -79,7 +79,11 @@ export function Sidebar() {
         const rolesRes = await fetch('/api/roles', { credentials: 'include' });
         const rolesData = await rolesRes.json();
         const role = Array.isArray(rolesData?.roles)
-          ? rolesData.roles.find((r: any) => normalizeName(r.name) === normalizeName(roleName))
+          ? rolesData.roles.find((r: any) => {
+              const dbName = normalizeName(r.name);
+              // Match either the enum value (English) or the display name (Spanish)
+              return dbName === normalizeName(enumRole) || dbName === normalizeName(roleName);
+            })
           : null;
         setAllowedScreens(role?.permissions ?? []);
       } catch {

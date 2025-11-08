@@ -66,6 +66,7 @@ export interface Client {
   canEditPrices: boolean;
   commissionFee: number;
   sellsOnInstallments: boolean;
+  accessibleUserIds?: number[];
 }
 
 export interface ProductionBatch {

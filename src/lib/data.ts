@@ -1,4 +1,4 @@
-import type { Client, Order, OrderDetail, ProductionBatch, Product, Claim, User, Role } from './types';
+import type { Client, Order, OrderDetail, ProductionBatch, Product, Claim, User, Role, PriceList } from './types';
 import { UserRole } from './types';
 
 export const clients: Client[] = [
@@ -42,6 +42,36 @@ export const orderDetails: OrderDetail[] = [
   { id: 9, productId: 7, productName: 'Texturado Mediano', type: 'Texturado', application: 'Llana', color: 'Gris Cemento', quantity: 20, unitPrice: 11000, totalPrice: 220000, orderId: 107, clientId: 2, status: 'pending', isProduced: false, productionDate: new Date('2023-11-28') },
 ];
 
+// Listas de precios de ejemplo
+export const priceLists: PriceList[] = [
+  {
+    id: 1,
+    name: 'Lista Base',
+    prices: {
+      1: 12500, // Pintura Látex Interior Mate 20L
+      2: 6300,  // Esmalte Sintético Brillante 4L
+      3: 13000, // Impermeabilizante Techos 10L
+      4: 4000,  // Barniz Marino Exterior 1L
+      5: 16500, // Pintura Epoxi Pisos Alto Tránsito 4L
+      6: 9800,  // Texturado Fino
+      7: 11200, // Texturado Mediano
+    },
+  },
+  {
+    id: 2,
+    name: 'Lista Premium',
+    prices: {
+      1: 13500,
+      2: 6900,
+      3: 14500,
+      4: 4600,
+      5: 17800,
+      6: 10500,
+      7: 11800,
+    },
+  },
+];
+
 export const productionBatches: ProductionBatch[] = [
     { id: 1, batchNumber: 'L231020', productionDate: new Date('2023-10-20'), plannedDate: new Date('2023-10-19'), items: [orderDetails[0], orderDetails[1]], status: 'Completed' },
     { id: 2, batchNumber: 'L231025', productionDate: new Date('2023-10-25'), plannedDate: new Date('2023-10-24'), items: [orderDetails[2]], status: 'Completed' },
@@ -53,12 +83,12 @@ export const claims: Claim[] = [
     { id: 1, orderDetailId: 6, orderId: 103, clientId: 1, clientName: 'Constructora del Norte S.A.', reason: 'Color incorrecto', status: 'open', resolution: undefined, createdAt: new Date('2023-11-15') },
 ];
 
-export const users: Pick<User, 'id' | 'name' | 'email' | 'role' | 'lastLogin'>[] = [
-    { id: 1, name: 'admin', email: 'admin@fabrica.com', role: UserRole.Admin, lastLogin: new Date('2023-11-20T10:00:00Z') },
-    { id: 2, name: 'vendedor_estrella', email: 'ventas@fabrica.com', role: UserRole.Sales, lastLogin: new Date('2023-11-19T14:30:00Z') },
-    { id: 3, name: 'jefe_produccion', email: 'produccion@fabrica.com', role: UserRole.Production, lastLogin: new Date('2023-11-21T08:00:00Z') },
-    { id: 4, name: 'system', email: 'system@fabrica.com', role: UserRole.System, lastLogin: new Date() },
-    { id: 5, name: 'invitado', email: 'guest@fabrica.com', role: UserRole.Guest, lastLogin: new Date() },
+export const users: Pick<User, 'id' | 'name' | 'email' | 'role' | 'lastLogin' | 'priceListId' | 'specialDiscountPct'>[] = [
+    { id: 1, name: 'admin', email: 'admin@fabrica.com', role: UserRole.Admin, lastLogin: new Date('2023-11-20T10:00:00Z'), priceListId: 1, specialDiscountPct: 0 },
+    { id: 2, name: 'vendedor_estrella', email: 'ventas@fabrica.com', role: UserRole.Sales, lastLogin: new Date('2023-11-19T14:30:00Z'), priceListId: 2, specialDiscountPct: 5 },
+    { id: 3, name: 'jefe_produccion', email: 'produccion@fabrica.com', role: UserRole.Production, lastLogin: new Date('2023-11-21T08:00:00Z'), priceListId: 1, specialDiscountPct: 0 },
+    { id: 4, name: 'system', email: 'system@fabrica.com', role: UserRole.System, lastLogin: new Date(), priceListId: 1, specialDiscountPct: 0 },
+    { id: 5, name: 'invitado', email: 'guest@fabrica.com', role: UserRole.Guest, lastLogin: new Date(), priceListId: 1, specialDiscountPct: 0 },
 ];
 
 export const screens = [

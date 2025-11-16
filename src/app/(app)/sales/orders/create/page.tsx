@@ -23,8 +23,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 // Select removido para clientes; usamos Combobox con búsqueda
-import { clients, products, orderDetails, users } from '@/lib/data';
-import type { Client, User } from '@/lib/types';
+import { products, orderDetails } from '@/lib/data';
+import type { Client } from '@/lib/types';
 import { UserRole } from '@/lib/types';
 import { ChevronLeft, PlusCircle, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -41,15 +41,19 @@ type OrderItem = {
   application: string;
 };
 
-const getProductPrice = (productId: number) => {
-    const detail = orderDetails.find(od => od.productId === productId);
-    return detail ? detail.unitPrice : 25000;
+const getFallbackPrice = (productId: number) => {
+  const detail = orderDetails.find(od => od.productId === productId);
+  return detail ? detail.unitPrice : 25000;
 }
 
 export default function CreateOrderPage() {
   const { toast } = useToast();
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [clients, setClients] = useState<Client[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+  const [priceListName, setPriceListName] = useState<string>('');
+  const [priceMap, setPriceMap] = useState<Record<number, number>>({});
+  const [userDiscountPct, setUserDiscountPct] = useState<number>(0);
   
   const [currentItem, setCurrentItem] = useState<{
     productId: string;
@@ -62,28 +66,19 @@ export default function CreateOrderPage() {
   }, [currentItem.productId]);
 
   const productOptions = useMemo(() => {
-    return products.map(p => ({ value: p.id.toString(), label: p.name }));
-  }, []);
+    // Mostrar solo productos que tengan precio en la lista asignada (si existe)
+    const idsWithPrice = new Set<number>(Object.keys(priceMap).map(k => parseInt(k, 10)));
+    const base = idsWithPrice.size > 0 ? products.filter(p => idsWithPrice.has(p.id)) : products;
+    return base.map(p => ({ value: p.id.toString(), label: p.name }));
+  }, [priceMap]);
 
   const colorOptions = useMemo(() => {
     return selectedProduct?.colors.map(c => ({ value: c, label: c })) || [];
   }, [selectedProduct]);
 
-  // Simulación de usuario logueado
-  const loggedInUser: User | undefined = users.find(u => u.id === 2); // Ventas
-  const isAdmin = loggedInUser?.role === UserRole.Admin;
-  const isSystem = loggedInUser?.role === UserRole.System;
-  const isSales = loggedInUser?.role === UserRole.Sales;
-
-  const visibleClients: Client[] = useMemo(() => {
-    if (isAdmin || isSystem) return clients;
-    if (isSales) return clients.filter(c => (c.accessibleUserIds || []).includes(loggedInUser!.id));
-    return clients;
-  }, [isAdmin, isSystem, isSales]);
-
   const clientOptions = useMemo(() => {
-    return visibleClients.map(c => ({ value: c.id.toString(), label: c.name }));
-  }, [visibleClients]);
+    return clients.map(c => ({ value: c.id.toString(), label: c.name }));
+  }, [clients]);
 
 
   useEffect(() => {
@@ -93,6 +88,40 @@ export default function CreateOrderPage() {
       setCurrentItem(prev => ({...prev, color: ''}));
     }
   }, [selectedProduct, currentItem.color]);
+
+  // Cargar configuración de precios del usuario actual
+  useEffect(() => {
+    const loadUserPricing = async () => {
+      try {
+        const res = await fetch('/api/user-pricing/me?status=active', { credentials: 'include' });
+        const data = await res.json();
+        if (res.ok && data?.ok) {
+          const pl = data.priceList as { id: number; name: string; prices: Record<number, number> };
+          const cfg = data.config as { priceListId: number; specialDiscountPct: number };
+          setPriceListName(pl?.name || '');
+          setPriceMap(pl?.prices || {});
+          setUserDiscountPct(Number(cfg?.specialDiscountPct || 0));
+        }
+      } catch (e) {
+        // Si falla, mantenemos mapa vacío y descuento 0
+      }
+    };
+    loadUserPricing();
+  }, []);
+
+  // Cargar clientes accesibles desde backend (filtra por usuario en API)
+  useEffect(() => {
+    const loadClients = async () => {
+      try {
+        const res = await fetch('/api/clients', { credentials: 'include' });
+        const data = await res.json();
+        if (res.ok && data?.ok) {
+          setClients(Array.isArray(data.clients) ? data.clients : []);
+        }
+      } catch {}
+    };
+    loadClients();
+  }, []);
 
 
   const handleAddItem = () => {
@@ -108,7 +137,8 @@ export default function CreateOrderPage() {
     }
     
     const quantity = parseInt(currentItem.quantity, 10);
-    const unitPrice = getProductPrice(product.id);
+    const basePrice = priceMap[product.id] ?? getFallbackPrice(product.id);
+    const unitPrice = Math.round(basePrice * (1 - (userDiscountPct || 0) / 100));
 
     const newItem: OrderItem = {
       productId: product.id,
@@ -135,7 +165,7 @@ export default function CreateOrderPage() {
     return orderItems.reduce((total, item) => total + item.totalPrice, 0);
   }, [orderItems]);
 
-  const handleSaveOrder = () => {
+  const handleSaveOrder = async () => {
     if(!selectedClient) {
         toast({ title: "Error", description: "Por favor, selecciona un cliente.", variant: "destructive"});
         return;
@@ -144,13 +174,31 @@ export default function CreateOrderPage() {
         toast({ title: "Error", description: "Por favor, añade al menos un ítem al pedido.", variant: "destructive"});
         return;
     }
-    toast({ title: "¡Éxito!", description: `Pedido para ${selectedClient.name} creado con éxito.`});
-    // Here you would typically send data to your backend
-    console.log({
-        client: selectedClient,
-        items: orderItems,
-        total: orderTotal
-    });
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          clientId: selectedClient.id,
+          items: orderItems.map(it => ({
+            productId: it.productId,
+            quantity: it.quantity,
+            color: it.color,
+            unitPrice: it.unitPrice,
+            totalPrice: it.totalPrice,
+          })),
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data?.ok) {
+        toast({ title: '¡Éxito!', description: `Pedido para ${selectedClient.name} creado con éxito.` });
+      } else {
+        toast({ title: 'Error', description: data?.error || 'No se pudo guardar el pedido.', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Error de red al guardar el pedido.', variant: 'destructive' });
+    }
   }
 
   return (
@@ -167,6 +215,16 @@ export default function CreateOrderPage() {
         </Button>
       </PageHeader>
       <div className="grid gap-8">
+        {(priceListName || userDiscountPct) && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Precios aplicados</CardTitle>
+              <CardDescription>
+                {priceListName ? `Lista: ${priceListName}` : 'Lista de precios por defecto'}{userDiscountPct ? ` · Descuento general: ${userDiscountPct}%` : ''}
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        )}
         <Card>
             <CardHeader>
                 <CardTitle>Información del Cliente</CardTitle>
@@ -179,7 +237,7 @@ export default function CreateOrderPage() {
                       options={clientOptions}
                       value={selectedClient?.id?.toString() || ''}
                       onChange={(value) => {
-                        const client = visibleClients.find(c => c.id === parseInt(value, 10)) || null;
+                        const client = clients.find(c => c.id === parseInt(value, 10)) || null;
                         setSelectedClient(client);
                       }}
                       placeholder='Selecciona un cliente'

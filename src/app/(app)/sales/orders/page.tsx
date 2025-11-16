@@ -20,7 +20,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { orderDetails, orders, clients, users } from '@/lib/data';
+import { format } from 'date-fns';
 import type { OrderDetail, OrderDetailStatus } from '@/lib/types';
 import { MoreHorizontal, ArrowUpDown, Download } from 'lucide-react';
 import {
@@ -30,7 +30,6 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
   } from "@/components/ui/dropdown-menu"
-import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import Papa from 'papaparse';
 
@@ -48,13 +47,8 @@ const statusTranslations: Record<OrderDetailStatus, string> = {
     cancelled: "Cancelado"
 };
 
-const getClientName = (clientId: number) => {
-    return clients.find(c => c.id === clientId)?.name || 'N/A';
-}
-
-const getOrderDate = (orderId: number): Date | null => {
-    return orders.find(o => o.id === orderId)?.orderDate || null;
-}
+const getClientName = (detailsEntry: any) => detailsEntry.clientName || 'N/A';
+const getOrderDate = (detailsEntry: any): Date | null => detailsEntry.orderDate ? new Date(detailsEntry.orderDate) : null;
 
 const statusVariantMap: { [key in OrderDetailStatus]: "default" | "secondary" | "destructive" | "outline" } = {
     pending: "outline",
@@ -66,7 +60,7 @@ const statusVariantMap: { [key in OrderDetailStatus]: "default" | "secondary" | 
     cancelled: "destructive",
 }
 
-const loggedInUser = users.find(u => u.id === 2); // Simulating sales user logged in
+// Datos vienen del backend, no usamos usuario simulado
 
 export default function SalesOrdersPage() {
   const [filter, setFilter] = useState('');
@@ -75,25 +69,36 @@ export default function SalesOrdersPage() {
     direction: SortDirection;
   } | null>({ key: 'orderId', direction: 'desc' });
   const [isClient, setIsClient] = useState(false);
+  const [details, setDetails] = useState<any[]>([]);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
   
-  const filteredAndSortedDetails = useMemo(() => {
-    const isSalesRole = loggedInUser?.role === 'Sales';
-    const salesUserOrderIds = isSalesRole 
-      ? new Set(orders.filter(o => o.userId === loggedInUser.id).map(o => o.id))
-      : new Set();
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch('/api/orders', { credentials: 'include' });
+        const data = await res.json();
+        if (res.ok && data?.ok && Array.isArray(data.details)) {
+          setDetails(data.details);
+        } else {
+          setDetails([]);
+        }
+      } catch {
+        setDetails([]);
+      }
+    };
+    load();
+  }, []);
 
-    let baseDetails = isSalesRole 
-      ? orderDetails.filter(od => salesUserOrderIds.has(od.orderId))
-      : orderDetails;
+  const filteredAndSortedDetails = useMemo(() => {
+    let baseDetails = details;
 
     let filtered = baseDetails.filter((item) => {
-      const clientName = getClientName(item.clientId).toLowerCase();
-      const productName = item.productName.toLowerCase();
-      const orderId = item.orderId.toString();
+      const clientName = getClientName(item).toLowerCase();
+      const productName = String(item.productName || '').toLowerCase();
+      const orderId = String(item.orderId);
       const searchTerm = filter.toLowerCase();
       return (
         clientName.includes(searchTerm) || 
@@ -107,11 +112,11 @@ export default function SalesOrdersPage() {
         let aValue, bValue;
 
         if(sortConfig.key === 'clientName') {
-            aValue = getClientName(a.clientId);
-            bValue = getClientName(b.clientId);
+            aValue = getClientName(a);
+            bValue = getClientName(b);
         } else if (sortConfig.key === 'orderDate') {
-            aValue = getOrderDate(a.orderId);
-            bValue = getOrderDate(b.orderId);
+            aValue = getOrderDate(a);
+            bValue = getOrderDate(b);
         } else {
             aValue = a[sortConfig.key as keyof OrderDetail];
             bValue = b[sortConfig.key as keyof OrderDetail];
@@ -241,11 +246,11 @@ export default function SalesOrdersPage() {
             </TableHeader>
             <TableBody>
               {filteredAndSortedDetails.map((detail) => {
-                const orderDate = getOrderDate(detail.orderId);
+                const orderDate = getOrderDate(detail);
                 return (
                 <TableRow key={detail.id}>
                   <TableCell className="font-medium">#{detail.orderId}-{detail.id}</TableCell>
-                  <TableCell>{getClientName(detail.clientId)}</TableCell>
+                  <TableCell>{getClientName(detail)}</TableCell>
                   <TableCell>{detail.productName}</TableCell>
                   <TableCell>{detail.color}</TableCell>
                   <TableCell className="text-center">{detail.quantity}</TableCell>

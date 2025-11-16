@@ -67,11 +67,15 @@ const roleVariantMap: { [key: string]: 'default' | 'secondary' | 'outline' | 'de
 const UI_ROLES = ['Admin', 'Ventas', 'Producción', 'Invitado', 'System'];
 
 type UserRow = { id: number; name: string; email: string; role: UserRoleEnum; lastLogin: Date | null };
+type UserPricingRow = { userId: number; priceListId: number; specialDiscountPct: number };
+type PriceListOption = { id: number; name: string };
 
 export default function UserSettingsPage() {
   const { toast } = useToast();
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [priceLists, setPriceLists] = useState<PriceListOption[]>([]);
+  const [userPricing, setUserPricing] = useState<Record<number, UserPricingRow>>({});
  
   const [availableRoles, setAvailableRoles] = useState<string[]>([]);
   useEffect(() => {
@@ -99,6 +103,8 @@ export default function UserSettingsPage() {
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editRole, setEditRole] = useState<UserRoleEnum>(UserRoleEnum.Guest);
+  const [editPriceListId, setEditPriceListId] = useState<string>('');
+  const [editDiscount, setEditDiscount] = useState<string>('');
  
   useEffect(() => {
     const loadUsers = async () => {
@@ -126,11 +132,41 @@ export default function UserSettingsPage() {
     loadUsers();
   }, []);
 
+  useEffect(() => {
+    const loadPriceLists = async () => {
+      try {
+        const res = await fetch('/api/price-lists', { credentials: 'include' });
+        const data = await res.json();
+        if (res.ok && Array.isArray(data?.priceLists)) {
+          setPriceLists(data.priceLists.map((pl: any) => ({ id: pl.id, name: pl.name })));
+        }
+      } catch {}
+    };
+    const loadUserPricing = async () => {
+      try {
+        const res = await fetch('/api/user-pricing', { credentials: 'include' });
+        const data = await res.json();
+        if (res.ok && Array.isArray(data?.configs)) {
+          const map: Record<number, UserPricingRow> = {};
+          data.configs.forEach((c: any) => {
+            map[c.userId] = { userId: c.userId, priceListId: Number(c.priceListId), specialDiscountPct: Number(c.specialDiscountPct) };
+          });
+          setUserPricing(map);
+        }
+      } catch {}
+    };
+    loadPriceLists();
+    loadUserPricing();
+  }, []);
+
   const onEditClick = (user: UserRow) => {
     setEditUser(user);
     setEditName(user.name);
     setEditEmail(user.email);
     setEditRole(user.role);
+    const pricing = userPricing[user.id];
+    setEditPriceListId(pricing ? String(pricing.priceListId) : (priceLists[0]?.id ? String(priceLists[0].id) : ''));
+    setEditDiscount(pricing ? String(pricing.specialDiscountPct) : '0');
     setEditOpen(true);
   };
 
@@ -155,6 +191,24 @@ export default function UserSettingsPage() {
         role: updated.role,
         lastLogin: updated.lastLogin ? new Date(updated.lastLogin) : u.lastLogin,
       }) : u));
+
+      // Update user pricing only for Sales role
+      if (editRole === UserRoleEnum.Sales && editPriceListId) {
+        const pr = await fetch(`/api/user-pricing/${editUser.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ priceListId: Number(editPriceListId), specialDiscountPct: Number(editDiscount || '0') }),
+        });
+        const prData = await pr.json();
+        if (!pr.ok || prData?.ok === false) {
+          throw new Error(prData?.error || 'Error al actualizar la configuración de precios');
+        }
+        setUserPricing(prev => ({
+          ...prev,
+          [editUser.id]: { userId: editUser.id, priceListId: Number(editPriceListId), specialDiscountPct: Number(editDiscount || '0') },
+        }));
+      }
       setEditOpen(false);
       toast({ title: 'Usuario actualizado', description: `Se guardaron los cambios de ${updated.name}.` });
     } catch (e: any) {
@@ -254,6 +308,29 @@ export default function UserSettingsPage() {
                 </Select>
               </div>
             </div>
+            {editRole === UserRoleEnum.Sales && (
+              <>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right">Lista de Precios</Label>
+                  <div className="col-span-3">
+                    <Select value={editPriceListId} onValueChange={(value) => setEditPriceListId(value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione una lista" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {priceLists.map(pl => (
+                          <SelectItem key={pl.id} value={String(pl.id)}>{pl.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="discount" className="text-right">Descuento general (%)</Label>
+                  <Input id="discount" type="number" min="0" max="100" value={editDiscount} onChange={(e) => setEditDiscount(e.target.value)} className="col-span-3" />
+                </div>
+              </>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)}>Cancelar</Button>

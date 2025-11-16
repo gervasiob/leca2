@@ -53,6 +53,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { Product } from '@/lib/types';
+import { Checkbox } from '@/components/ui/checkbox';
 
 
 export default function ProductSettingsPage() {
@@ -61,16 +62,23 @@ export default function ProductSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showOnlyActive, setShowOnlyActive] = useState(true);
+  const [statuses, setStatuses] = useState<Record<number, 'active' | 'inactive'>>({});
   useEffect(() => {
     const fetchProducts = async () => {
       try {
+        const meRes = await fetch('/api/me', { credentials: 'include' });
+        const meData = await meRes.json().catch(() => ({}));
+        const role = meData?.user?.role as string | undefined;
+        setIsAdmin(role === 'Admin');
         const res = await fetch('/api/products');
         const data = await res.json();
         if (data.ok) {
-          setProducts(data.products);
+            setProducts(data.products);
         } else {
-          toast({ title: 'Error', description: data.error, variant: 'destructive' });
+          const message = typeof data.error === 'string' ? data.error : 'Error al cargar productos.';
+          toast({ title: 'Error', description: message, variant: 'destructive' });
         }
       } catch (error) {
         toast({ title: 'Error', description: 'No se pudieron cargar los productos.', variant: 'destructive' });
@@ -118,7 +126,8 @@ export default function ProductSettingsPage() {
             setDialogOpen(false);
             setEditingProduct(null);
         } else {
-            toast({ title: 'Error', description: data.error, variant: 'destructive' });
+            const message = typeof data.error === 'string' ? data.error : 'No se pudo guardar el producto.';
+            toast({ title: 'Error', description: message, variant: 'destructive' });
         }
     } catch (error) {
         toast({ title: 'Error de red', description: 'No se pudo guardar el producto.', variant: 'destructive' });
@@ -130,13 +139,34 @@ export default function ProductSettingsPage() {
         const res = await fetch(`/api/products/${productId}`, { method: 'DELETE' });
         const data = await res.json();
         if (data.ok) {
-            setProducts(products.filter(p => p.id !== productId));
-            toast({ title: 'Producto eliminado', variant: 'destructive' });
+            setProducts(products.map(p => p.id === productId ? { ...p, status: 'inactive' } : p));
+            toast({ title: 'Producto marcado como inactivo' });
         } else {
-            toast({ title: 'Error', description: data.error, variant: 'destructive' });
+          const message = typeof data.error === 'string' ? data.error : 'No se pudo eliminar el producto.';
+          toast({ title: 'Error', description: message, variant: 'destructive' });
         }
     } catch (error) {
         toast({ title: 'Error de red', description: 'No se pudo eliminar el producto.', variant: 'destructive' });
+    }
+  };
+
+  const handleReactivateProduct = async (productId: number) => {
+    try {
+        const res = await fetch(`/api/products/${productId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'active' })
+        });
+        const data = await res.json();
+        if (data.ok) {
+            setProducts(products.map(p => p.id === productId ? { ...p, status: 'active' } : p));
+            toast({ title: 'Producto reactivado' });
+        } else {
+          const message = typeof data.error === 'string' ? data.error : 'No se pudo reactivar el producto.';
+          toast({ title: 'Error', description: message, variant: 'destructive' });
+        }
+    } catch (error) {
+        toast({ title: 'Error de red', description: 'No se pudo reactivar el producto.', variant: 'destructive' });
     }
   };
 
@@ -155,6 +185,12 @@ export default function ProductSettingsPage() {
         <CardHeader>
             <CardTitle>Productos</CardTitle>
             <CardDescription>Un listado de todos los productos en tu fábrica.</CardDescription>
+            {isAdmin && (
+              <div className="mt-2 flex items-center gap-2">
+                <Checkbox id="only-active" checked={showOnlyActive} onCheckedChange={(c) => setShowOnlyActive(!!c)} />
+                <Label htmlFor="only-active">Solo Activos</Label>
+              </div>
+            )}
         </CardHeader>
         <CardContent>
             {loading ? (
@@ -170,13 +206,14 @@ export default function ProductSettingsPage() {
                         <TableHead>Tipo</TableHead>
                         <TableHead>Aplicación</TableHead>
                         <TableHead>Colores</TableHead>
+                        <TableHead>Estado</TableHead>
                         <TableHead>
                             <span className="sr-only">Acciones</span>
                         </TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {products.map((product) => (
+                    {(showOnlyActive ? products.filter(p => p.status === 'active') : products).map((product) => (
                         <TableRow key={product.id}>
                             <TableCell className="font-medium">#{product.id}</TableCell>
                             <TableCell>{product.name}</TableCell>
@@ -185,10 +222,15 @@ export default function ProductSettingsPage() {
                             <TableCell>
                                 <div className='flex flex-wrap gap-1'>
                                     {product.colors.map(color => (
-                                        <Badge key={color} variant="secondary">{color}</Badge>
+                                        <Badge key={color} variant="tag">{color}</Badge>
                                     ))}
                                 </div>
-                            </TableCell>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={(product.status ?? 'active') === 'active' ? 'default' : 'destructive'}>
+                            {(product.status ?? 'active') === 'active' ? 'Activo' : 'Inactivo'}
+                          </Badge>
+                        </TableCell>
                             <TableCell>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
@@ -198,26 +240,28 @@ export default function ProductSettingsPage() {
                                     </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
-                                    <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                    <DropdownMenuItem onClick={() => handleOpenDialog(product)}>Editar</DropdownMenuItem>
-                                    <AlertDialog>
+                                      <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                      <DropdownMenuItem onClick={() => handleOpenDialog(product)}>Editar</DropdownMenuItem>
+                                      {product.status === 'inactive' && (
+                                        <DropdownMenuItem onClick={() => handleReactivateProduct(product.id)}>Reactivar</DropdownMenuItem>
+                                      )}
+                                      <AlertDialog>
                                         <AlertDialogTrigger asChild>
-                                            <DropdownMenuItem onSelect={e => e.preventDefault()} className="text-destructive">
-                                                Eliminar
-                                            </DropdownMenuItem>
+                                          <DropdownMenuItem onSelect={e => e.preventDefault()} className="text-destructive">
+                                            Eliminar
+                                          </DropdownMenuItem>
                                         </AlertDialogTrigger>
                                         <AlertDialogContent>
                                             <AlertDialogHeader>
                                                 <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                                                 <AlertDialogDescription>
-                                                    Esta acción no se puede deshacer. Se eliminará el producto
-                                                    permanentemente.
+                                                    Esta acción no se puede deshacer. Se marcará el producto como inactivo.
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
                                                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
                                                 <AlertDialogAction onClick={() => handleDeleteProduct(product.id)}>
-                                                    Eliminar
+                                                    Confirmar
                                                 </AlertDialogAction>
                                             </AlertDialogFooter>
                                         </AlertDialogContent>

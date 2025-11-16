@@ -22,6 +22,13 @@ model User {
   roleRef      Role     @relation(fields: [roleId], references: [id])
   orders       Order[]
 
+  clientAccesses ClientAccess[]
+
+  // Pricing assignment (optional)
+  priceListId        Int?
+  specialDiscountPct Int     @default(0)
+  priceList          PriceList? @relation(fields: [priceListId], references: [id])
+
   @@map("users")
 }
 
@@ -49,6 +56,8 @@ model Client {
   orderDetails        OrderDetail[]
   claims              Claim[]
 
+  clientAccesses      ClientAccess[]
+
   @@map("clients")
 }
 
@@ -60,6 +69,7 @@ model Product {
   colors      String[]
   status      String        @default("active")
   orderDetails OrderDetail[]
+  priceListItems PriceListItem[]
 
   @@map("products")
 }
@@ -117,6 +127,40 @@ model ProductionBatch {
   items          OrderDetail[]
 
   @@map("production_batches")
+}
+
+model PriceList {
+  id    Int    @id @default(autoincrement())
+  name  String
+  items PriceListItem[]
+
+  users User[]
+
+  @@map("price_lists")
+}
+
+model PriceListItem {
+  id           Int       @id @default(autoincrement())
+  priceList    PriceList @relation(fields: [priceListId], references: [id])
+  priceListId  Int
+  product      Product   @relation(fields: [productId], references: [id])
+  productId    Int
+  price        Decimal
+  status       String    @default("active")
+
+  @@unique([priceListId, productId])
+  @@map("price_list_items")
+}
+
+model ClientAccess {
+  id        Int    @id @default(autoincrement())
+  client    Client @relation(fields: [clientId], references: [id])
+  clientId  Int
+  user      User   @relation(fields: [userId], references: [id])
+  userId    Int
+
+  @@unique([clientId, userId])
+  @@map("client_access")
 }
 
 model Claim {

@@ -18,6 +18,13 @@ export interface Product {
     status: 'active' | 'inactive';
 }
 
+export interface PriceList {
+  id: number;
+  name: string;
+  // Precios por ID de producto
+  prices: Record<number, number>;
+}
+
 export interface OrderDetail {
   id: number;
   productId: number;
@@ -101,6 +108,9 @@ export interface User {
   lastLogin: Date;
   passwordHash?: string;
   roleId?: number;
+  // Configuración de precios asignada al usuario (Ventas)
+  priceListId?: number;
+  specialDiscountPct?: number; // porcentaje de descuento general
 }
 
 export interface Role {

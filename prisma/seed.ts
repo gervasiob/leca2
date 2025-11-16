@@ -24,6 +24,7 @@ import {
   productionBatches as seedBatches,
   orderDetails as seedDetails,
   claims as seedClaims,
+  priceLists as seedPriceLists,
 } from '../src/lib/data';
 import bcrypt from 'bcryptjs';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -52,6 +53,8 @@ async function main() {
   await prisma.orderDetail.deleteMany({});
   await prisma.productionBatch.deleteMany({});
   await prisma.order.deleteMany({});
+  await prisma.priceListItem.deleteMany({});
+  await prisma.priceList.deleteMany({});
   await prisma.user.deleteMany({});
   await prisma.role.deleteMany({});
   await prisma.product.deleteMany({});
@@ -70,33 +73,7 @@ async function main() {
   }
   console.log('Roles seeded.');
 
-  // 2. Seed Users
-  for (const user of seedUsers) {
-    // The role name in seedUsers is now the English name, which is the same as the role enum.
-    const roleInDb = await prisma.role.findFirst({
-      where: { name: { equals: user.role, mode: 'insensitive' } },
-    });
-
-    if (!roleInDb) {
-      console.warn(`Role "${user.role}" not found in DB. Skipping user "${user.name}".`);
-      continue;
-    }
-    const password = passwordForRole(user.role);
-    const passwordHash = await bcrypt.hash(password, 10);
-
-    await prisma.user.create({
-      data: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role, // This is the English enum value
-        lastLogin: user.lastLogin,
-        passwordHash,
-        roleId: roleInDb.id,
-      },
-    });
-  }
-  console.log('Users seeded.');
+  // (moved) Users will be seeded AFTER price lists
 
   // 3. Seed Clients
   for (const client of seedClients) {
@@ -132,7 +109,65 @@ async function main() {
   }
   console.log('Products seeded.');
 
-  // 5. Seed Orders
+  // 4.5 Seed Price Lists and Items
+  for (const pl of seedPriceLists) {
+    await prisma.priceList.create({
+      data: {
+        id: pl.id,
+        name: pl.name,
+        items: {
+          create: Object.entries(pl.prices).map(([productIdStr, price]) => ({
+            productId: Number(productIdStr),
+            price: new Decimal(price),
+            status: 'active',
+          })),
+        },
+      },
+    });
+  }
+  console.log('Price lists seeded.');
+
+  // 5. Seed Users (after price lists exist to satisfy FK priceListId)
+  for (const user of seedUsers) {
+    const roleInDb = await prisma.role.findFirst({
+      where: { name: { equals: user.role, mode: 'insensitive' } },
+    });
+
+    if (!roleInDb) {
+      console.warn(`Role "${user.role}" not found in DB. Skipping user "${user.name}".`);
+      continue;
+    }
+
+    // Ensure referenced price list exists (optional check)
+    let priceListId: number | null = user.priceListId ?? null;
+    if (priceListId !== null) {
+      const plExists = await prisma.priceList.findUnique({ where: { id: priceListId } });
+      if (!plExists) {
+        console.warn(`PriceList #${priceListId} not found for user "${user.name}". Assigning null.`);
+        priceListId = null;
+      }
+    }
+
+    const password = passwordForRole(user.role);
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    await prisma.user.create({
+      data: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        lastLogin: user.lastLogin,
+        passwordHash,
+        roleId: roleInDb.id,
+        priceListId: priceListId,
+        specialDiscountPct: user.specialDiscountPct ?? 0,
+      },
+    });
+  }
+  console.log('Users seeded.');
+
+  // 6. Seed Orders
   for (const order of seedOrders) {
     const client = await prisma.client.findUnique({ where: { id: order.clientId } });
     const user = await prisma.user.findUnique({ where: { id: order.userId } });
@@ -156,7 +191,7 @@ async function main() {
   }
   console.log('Orders seeded.');
   
-  // 6. Ensure all orders from orderDetails exist before seeding details
+  // 7. Ensure all orders from orderDetails exist before seeding details
   const detailOrderIds = [...new Set(seedDetails.map(d => d.orderId))];
   for (const orderId of detailOrderIds) {
     const orderExists = await prisma.order.findUnique({ where: { id: orderId }});
@@ -183,7 +218,7 @@ async function main() {
     }
   }
 
-  // 7. Seed Production Batches
+  // 8. Seed Production Batches
   for (const batch of seedBatches) {
     await prisma.productionBatch.create({
       data: {
@@ -197,7 +232,7 @@ async function main() {
   }
   console.log('Production batches seeded.');
 
-  // 8. Seed Order Details
+  // 9. Seed Order Details
   for (const detail of seedDetails) {
     await prisma.orderDetail.create({
       data: {
@@ -224,7 +259,7 @@ async function main() {
   }
   console.log('Order details seeded.');
 
-  // 9. Seed Claims
+  // 10. Seed Claims
   for (const claim of seedClaims) {
     await prisma.claim.create({
         data: {

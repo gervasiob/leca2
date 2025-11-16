@@ -29,8 +29,9 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Label } from '@/components/ui/label';
-import { users } from '@/lib/data';
 import type { Client, User } from '@/lib/types';
 import { UserRole } from '@/lib/types';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
@@ -46,40 +47,58 @@ import { useToast } from '@/hooks/use-toast';
 export default function ClientsPage() {
   const { toast } = useToast();
   const [clients, setClients] = useState<Client[]>([]);
+  const [usersList, setUsersList] = useState<User[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [isAccessDialogOpen, setAccessDialogOpen] = useState(false);
   const [accessEditingClient, setAccessEditingClient] = useState<Client | null>(null);
   const [accessSelection, setAccessSelection] = useState<number[]>([]);
-
-  // Simulación de usuario logueado
-  const loggedInUser: User | undefined = users.find(u => u.id === 1); // Admin por defecto
-  const isAdmin = loggedInUser?.role === UserRole.Admin;
-  const isSystem = loggedInUser?.role === UserRole.System;
-  const isSales = loggedInUser?.role === UserRole.Sales;
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isSystem, setIsSystem] = useState(false);
+  const [isSales, setIsSales] = useState(false);
+  const [isAccessPickerOpen, setAccessPickerOpen] = useState(false);
 
   const visibleClients: Client[] = useMemo(() => {
-    if (isAdmin || isSystem) return clients;
-    if (isSales) return clients.filter(c => (c.accessibleUserIds || []).includes(loggedInUser!.id));
     return clients;
-  }, [clients, isAdmin, isSystem, isSales]);
+  }, [clients]);
 
   useEffect(() => {
-    const fetchClients = async () => {
+    const init = async () => {
       try {
         setLoading(true);
-        const res = await fetch('/api/clients', { credentials: 'include' });
-        const data = await res.json();
-        if (data.ok) setClients(data.clients);
+        const [meRes, clientsRes, usersRes] = await Promise.all([
+          fetch('/api/me', { credentials: 'include' }),
+          fetch('/api/clients', { credentials: 'include' }),
+          fetch('/api/users', { credentials: 'include' }),
+        ]);
+        const meData = await meRes.json().catch(() => ({}));
+        const role = meData?.user?.role as string | undefined;
+        setIsAdmin(role === 'Admin');
+        setIsSystem(role === 'System');
+        setIsSales(role === 'Sales');
+        const clientsData = await clientsRes.json().catch(() => ({}));
+        if (clientsRes.ok && clientsData?.ok) setClients(clientsData.clients || []);
+        const usersData = await usersRes.json().catch(() => ({}));
+        if (usersRes.ok && usersData?.ok) setUsersList(usersData.users || []);
       } catch (e) {
-        toast({ title: 'Error', description: 'No se pudo cargar clientes', variant: 'destructive' });
+        toast({ title: 'Error', description: 'No se pudo cargar clientes/usuarios', variant: 'destructive' });
       } finally {
         setLoading(false);
       }
     };
-    fetchClients();
+    init();
   }, []);
+
+  useEffect(() => {
+    if (isAdmin) {
+      if (editingClient) {
+        setAccessSelection(editingClient.accessibleUserIds || []);
+      } else if (!isDialogOpen) {
+        setAccessSelection([]);
+      }
+    }
+  }, [isAdmin, isDialogOpen, editingClient]);
 
   const handleSaveClient = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -143,12 +162,42 @@ export default function ClientsPage() {
     setAccessSelection(prev => prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]);
   };
 
-  const handleSaveAccess = () => {
+  const handleSaveAccess = async () => {
     if (!accessEditingClient) return;
-    setClients(prev => prev.map(c => c.id === accessEditingClient.id ? { ...c, accessibleUserIds: accessSelection } : c));
+    try {
+      const res = await fetch(`/api/clients/${accessEditingClient.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ accessibleUserIds: accessSelection }),
+      });
+      const data = await res.json();
+      if (res.ok && data?.ok) {
+        setClients(prev => prev.map(c => c.id === accessEditingClient.id ? data.client : c));
+        toast({ title: 'Acceso actualizado' });
+      } else {
+        toast({ title: 'Error', description: data?.error || 'No se pudo actualizar el acceso', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Error de red al actualizar acceso', variant: 'destructive' });
+    }
     setAccessDialogOpen(false);
     setAccessEditingClient(null);
-    toast({ title: 'Acceso actualizado' });
+  };
+
+  const handleDeleteClient = async (clientId: number) => {
+    try {
+      const res = await fetch(`/api/clients/${clientId}`, { method: 'DELETE', credentials: 'include' });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.ok) {
+        setClients(prev => prev.filter(c => c.id !== clientId));
+        toast({ title: 'Cliente eliminado' });
+      } else {
+        toast({ title: 'Error', description: data?.error || 'No se pudo eliminar', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Error de red al eliminar cliente', variant: 'destructive' });
+    }
   };
 
   return (
@@ -209,16 +258,33 @@ export default function ClientsPage() {
                   <div className="grid grid-cols-4 items-start gap-4">
                     <Label className="text-right">Usuarios con acceso</Label>
                     <div className="col-span-3 space-y-2">
-                      {users.map(u => (
-                        <label key={u.id} className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={accessSelection.includes(u.id)}
-                            onChange={() => toggleAccessUser(u.id)}
-                          />
-                          <span>{u.name} ({u.role})</span>
-                        </label>
-                      ))}
+                      <div className="flex flex-wrap gap-2">
+                        {usersList.filter(u => accessSelection.includes(u.id)).map(u => (
+                          <Badge key={u.id} variant="tag">{u.name} ({u.role})</Badge>
+                        ))}
+                        {accessSelection.length === 0 && (
+                          <span className="text-sm text-muted-foreground">Sin usuarios seleccionados</span>
+                        )}
+                      </div>
+                      <Popover open={isAccessPickerOpen} onOpenChange={setAccessPickerOpen}>
+                        <PopoverTrigger asChild>
+                          <Button type="button" variant="outline">Seleccionar usuarios</Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-2">
+                          <div className="flex flex-col gap-2 max-h-48 overflow-auto">
+                            {usersList.map(u => (
+                              <label key={u.id} className="flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  checked={accessSelection.includes(u.id)}
+                                  onChange={() => toggleAccessUser(u.id)}
+                                />
+                                <span>{u.name} ({u.role})</span>
+                              </label>
+                            ))}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   </div>
                 )}
@@ -268,7 +334,7 @@ export default function ClientsPage() {
                     <TableCell>
                       {(client.accessibleUserIds || []).length > 0
                         ? (client.accessibleUserIds || [])
-                            .map(uid => users.find(u => u.id === uid)?.name || `#${uid}`)
+                            .map(uid => usersList.find(u => u.id === uid)?.name || `#${uid}`)
                             .join(', ')
                         : '—'}
                     </TableCell>
@@ -294,13 +360,10 @@ export default function ClientsPage() {
                           Editar
                         </DropdownMenuItem>
                         {isAdmin && (
-                          <DropdownMenuItem onClick={() => openAccessEditor(client)}>
-                            Editar Acceso
+                          <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteClient(client.id)}>
+                            Eliminar
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem className="text-destructive">
-                          Eliminar
-                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
